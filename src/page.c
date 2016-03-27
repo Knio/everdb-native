@@ -2,8 +2,8 @@
 #include "page.h"
 
 // get the host index of a relative index in a page table
-u32 get_host_index(edb *db, const u32 page, const u32 index) {
-  char* page_table = BLOCK(db->data, page);
+u32 page_get_host_index(edb *db, const u32 page, const u32 index) {
+  block page_table = BLOCK(db->data, page);
   const page_header *ph = HEADER(page_table, page_header);
   if (ph->nblocks < index) {
     return -1;
@@ -25,10 +25,13 @@ u32 get_host_index(edb *db, const u32 page, const u32 index) {
   return block_ptrs[INDEX1(index)];
 }
 
-void init_page(edb *db, const u32 page) {
+inline block page_get_host_block(edb *db, const u32 page, const u32 index) {
+  return BLOCK(db->data, page_get_host_index(db, page, index));
+}
+
+void page_init(edb *db, const u32 page) {
   block page_table = BLOCK(db->data, page);
-  const page_header *ph = *((page_header*) (
-      page_table + BLOCK_SIZE - sizeof page_header));
+  const page_header *ph = HEADER(page_table, page_header);
 
   memset(page_table, 0, BLOCK_SIZE);
 
@@ -36,11 +39,9 @@ void init_page(edb *db, const u32 page) {
   exit(1);
 }
 
-void allocate(edb *db, const u32 page, const u32 nblocks) {
+void page_resize(edb *db, const u32 page, const u32 nblocks) {
   block page_table = BLOCK(db->data, page);
-  const page_header *ph = *((page_header*) (
-      page_table + BLOCK_SIZE - sizeof page_header));
-
+  const page_header *ph = HEADER(page_table, page_header);
 
   while (ph->nblocks < nblocks) {
     // grow

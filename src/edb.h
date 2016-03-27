@@ -12,6 +12,13 @@
 #define BLOCK_SIZE (1 << BLOCK_BITS)
 #define BLOCK_MASK (BLOCK_SIZE - 1)
 
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef char* block;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,8 +35,8 @@ typedef struct {
   int h_file;
   void* h_map;
 #endif
-  char* data;
-  uint64_t size;
+  block data;
+  u64 size;
 } edb;
 
 
@@ -49,14 +56,14 @@ void edb_close(edb *db);
  * @return value of key
  */
 char* edb_get(const edb *db,
-    const char* key, uint32_t nkey);
+    const char* key, u32 nkey);
 
 /**
  * Insert or overwrite a key
  */
 int edb_put(edb *db,
-    const char* key, uint32_t nkey,
-    const char* value, uint32_t nvalue);
+    const char* key, u32 nkey,
+    const char* value, u32 nvalue);
 
 
 #ifdef __cplusplus

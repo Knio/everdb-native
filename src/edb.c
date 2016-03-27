@@ -16,7 +16,7 @@
 
 
 int
-edb_map(edb *db, uint64_t size);
+edb_map(edb *db, u64 size);
 void
 edb_map_close(edb *db);
 int
@@ -150,7 +150,7 @@ void edb_map_close(edb *db) {
 #endif
 }
 
-int edb_map(edb *db, uint64_t size) {
+int edb_map(edb *db, u64 size) {
   if (db == NULL) return -1;
   int ret = 0;
 
@@ -168,7 +168,7 @@ int edb_map(edb *db, uint64_t size) {
     goto err;
   }
 
-  db->data = (char*) MapViewOfFile(
+  db->data = (block) MapViewOfFile(
     db->h_mapping,
     db->readonly ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,
     0, 0, 0
@@ -191,7 +191,7 @@ int edb_map(edb *db, uint64_t size) {
       goto err;
     }
   }
-  db->data = (char*) mmap(
+  db->data = (block) mmap(
     NULL,
     size,
     PROT_READ |
@@ -201,6 +201,7 @@ int edb_map(edb *db, uint64_t size) {
     0
   );
   if(db->data == (char*) MAP_FAILED) {
+    db->data = NULL;
     ret = -9;
     goto err;
   }
