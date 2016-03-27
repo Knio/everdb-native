@@ -27,7 +27,7 @@ edb_check(const edb *db);
 
 int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
   int ret = 0;
-
+  u64 size = 0;
   memset(db, 0, sizeof(edb));
 
 
@@ -80,7 +80,7 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
     goto err;
   }
 
-  uint64_t size = db->size;
+  size = db->size;
 
   if (size == 0) {
     size = BLOCK_SIZE;
@@ -143,9 +143,9 @@ void edb_map_close(edb *db) {
     db->h_mapping = NULL;
   }
 #elif __linux__
-  if(db->data != MAP_FAILED) {
+  if(db->data != NULL) {
     munmap(db->data, db->size);
-    db->data = MAP_FAILED;
+    db->data = NULL;
   }
 #endif
 }
@@ -200,7 +200,7 @@ int edb_map(edb *db, uint64_t size) {
     db->h_file,
     0
   );
-  if(db->data == MAP_FAILED) {
+  if(db->data == (char*) MAP_FAILED) {
     ret = -9;
     goto err;
   }
