@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-typedef struct page_header_t {
+typedef struct {
   u8 header_length;
   u32 nblocks;
   u32 checksum;

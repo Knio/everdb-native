@@ -1,6 +1,10 @@
 #include "edb.h"
 #include "page.h"
 
+#ifdef __linux__
+#include <string.h> //memset
+#endif
+
 // get the host index of a relative index in a page table
 // returns 0 on error
 u32 page_get_host_index(const edb *db, const u32 page, const u32 index) {

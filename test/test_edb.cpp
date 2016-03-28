@@ -6,7 +6,7 @@
 #include "../src/array.h"
 
 #ifdef __linux__
-#include "string.h" //memcpy
+#include <string.h> //memcpy
 #endif
 
 TEST_CASE("open") {
@@ -56,13 +56,13 @@ TEST_CASE("array") {
   REQUIRE(db->size == BLOCK_SIZE * 2);
 
   u64 x = 42, y = 43;
-  array_init(db, 0, sizeof u64);
+  array_init(db, 0, sizeof(u64));
 
-  REQUIRE(sizeof page_header == 12);
+  REQUIRE(sizeof(page_header) == 12);
 
   block page_table = BLOCK(db->data, 0);
   const array_header *ah = (array_header*)
-      (page_table + BLOCK_SIZE - sizeof page_header - sizeof array_header);
+      (page_table + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
   REQUIRE(ah->item_size == 8);
 
   // array is length 0
@@ -79,7 +79,7 @@ TEST_CASE("array") {
 
   REQUIRE(array_length(db, 0) == 1);
   REQUIRE(array_capacity(db, 0) == (
-    (BLOCK_SIZE - sizeof page_header - sizeof array_header) / sizeof u64
+    (BLOCK_SIZE - sizeof(page_header) - sizeof(array_header)) / sizeof(u64)
   ));
 
   // get and set element 0 work
@@ -105,7 +105,7 @@ TEST_CASE("array") {
   REQUIRE(y == 42);
   page_table = BLOCK(db->data, 0);
   ah = (array_header*)
-      (page_table + BLOCK_SIZE - sizeof page_header - sizeof array_header);
+      (page_table + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
   REQUIRE(ah->item_size == 8);
   REQUIRE(array_length(db, 0) == 1);
   REQUIRE(array_get(db, 0, 0, &y) == 0);

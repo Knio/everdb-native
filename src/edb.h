@@ -53,20 +53,21 @@ void edb_close(edb *db);
 
 int edb_allocate(edb *db, u64 size);
 
+#if 0
 /**
  * lookup a key
  * @return value of key
- * /
+ */
 char* edb_get(const edb *db,
     const char* key, u32 nkey);
 
 /**
  * Insert or overwrite a key
- * /
+ */
 int edb_put(edb *db,
     const char* key, u32 nkey,
     const char* value, u32 nvalue);
-*/
+#endif
 
 #ifdef __cplusplus
 }

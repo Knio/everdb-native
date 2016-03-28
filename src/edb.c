@@ -180,7 +180,7 @@ int edb_allocate(edb *db, u64 size) {
   }
 #elif __linux__
   if (db->size < size) {
-    if (fallocate(db->h_file, 0, 0, size) < 0) {
+    if (posix_fallocate(db->h_file, 0, size) != 0) {
       ret = -11;
       goto err;
     }
