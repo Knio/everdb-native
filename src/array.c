@@ -1,6 +1,7 @@
 #include "array.h"
 
-void array_init(edb *db, const u32 page, const u32 item_size) {
+
+void array_init(edb *db, const u32 page, const u8 item_size) {
   page_init(db, page);
   const block page_table = BLOCK(db->data, page);
   array_header *ah = HEADER(page_table, array_header);
@@ -29,21 +30,25 @@ int array_resize(edb *db, const u32 page, const u32 length) {
   page_resize(db, page, pages);
   ah->capacity = items_per_block * pages;
   ah->length = length;
-
+  return 0;
 }
+
 
 u32 array_length(const edb *db, const u32 page) {
   const block page_table = BLOCK(db->data, page);
   const array_header *ah = HEADER(page_table, array_header);
   return ah->length;
 }
+
+
 u32 array_capacity(const edb *db, const u32 page) {
   const block page_table = BLOCK(db->data, page);
   const array_header *ah = HEADER(page_table, array_header);
   return ah->capacity;
 }
 
-void* array_data(edb *db, const u32 page, const u32 index) {
+
+void* array_data(const edb *db, const u32 page, const u32 index) {
   const block page_table = BLOCK(db->data, page);
   const array_header *ah = HEADER(page_table, array_header);
 
@@ -52,10 +57,11 @@ void* array_data(edb *db, const u32 page, const u32 index) {
   if (ah->nblocks != 0) {
     const u32 items_per_block = BLOCK_SIZE / ah->item_size;
     item_block = page_get_host_block(db, page, index / items_per_block);
-    u32 local_index = index % items_per_block;
+    local_index = index % items_per_block;
   }
   return (void*) (item_block + local_index * ah->item_size);
 }
+
 
 void array_get(const edb *db, const u32 page, const u32 index, void* data) {
   const block page_table = BLOCK(db->data, page);
@@ -67,6 +73,7 @@ void array_get(const edb *db, const u32 page, const u32 index, void* data) {
     ah->item_size);
 }
 
+
 void array_set(edb *db, const u32 page, const u32 index, void* data) {
   const block page_table = BLOCK(db->data, page);
   const array_header *ah = HEADER(page_table, array_header);
@@ -77,11 +84,13 @@ void array_set(edb *db, const u32 page, const u32 index, void* data) {
     ah->item_size);
 }
 
+
 void array_push(edb *db, const u32 page, void *data) {
   u32 index = array_length(db, page);
   array_resize(db, page, index + 1);
   array_set(db, page, index, data);
 }
+
 
 void array_pop(edb *db, const u32 page, void* data) {
   u32 index = array_length(db, page) - 1;

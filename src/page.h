@@ -15,10 +15,31 @@
 
 #define HEADER(root, type) ((type*) (root + BLOCK_SIZE - sizeof(type)))
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct page_header_t {
-  u32 header_length;
+  u8 header_length;
   u32 nblocks;
   u32 checksum;
 } page_header;
+
+
+void
+page_init(edb *db, const u32 page);
+
+u32
+page_get_host_index(const edb *db, const u32 page, const u32 index);
+
+block
+page_get_host_block(const edb *db, const u32 page, const u32 index);
+
+void
+page_resize(edb *db, const u32 page, const u32 nblocks);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

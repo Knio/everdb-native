@@ -2,11 +2,12 @@
 #include "page.h"
 
 // get the host index of a relative index in a page table
-u32 page_get_host_index(edb *db, const u32 page, const u32 index) {
+// returns 0 on error
+u32 page_get_host_index(const edb *db, const u32 page, const u32 index) {
   block page_table = BLOCK(db->data, page);
   const page_header *ph = HEADER(page_table, page_header);
   if (ph->nblocks < index) {
-    return -1;
+    return 0;
   }
 
   if (ph->nblocks == 0) {
@@ -25,7 +26,7 @@ u32 page_get_host_index(edb *db, const u32 page, const u32 index) {
   return block_ptrs[INDEX1(index)];
 }
 
-inline block page_get_host_block(edb *db, const u32 page, const u32 index) {
+block page_get_host_block(const edb *db, const u32 page, const u32 index) {
   return BLOCK(db->data, page_get_host_index(db, page, index));
 }
 
@@ -34,9 +35,6 @@ void page_init(edb *db, const u32 page) {
   const page_header *ph = HEADER(page_table, page_header);
 
   memset(page_table, 0, BLOCK_SIZE);
-
-  // TODO
-  exit(1);
 }
 
 void page_resize(edb *db, const u32 page, const u32 nblocks) {

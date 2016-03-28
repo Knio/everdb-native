@@ -1,1 +1,6 @@
-cl /Wall src/edb.c & cl test/test_edb.cpp & test_edb.exe & del *.obj *.exe test.db
+mkdir build
+del build\*.* /Q
+cl /Wall /c src/*.c /Fobuild\
+cl test/test_edb.cpp build/*.obj /Fobuild\
+test_edb.exe
+del test_edb.exe test.db build\*.* /Q

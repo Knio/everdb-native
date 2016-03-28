@@ -16,7 +16,7 @@
 
 
 int
-edb_map(edb *db, u64 size);
+edb_allocate(edb *db, u64 size);
 void
 edb_map_close(edb *db);
 int
@@ -86,7 +86,7 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
     size = BLOCK_SIZE;
   }
 
-  ret = edb_map(db, size);
+  ret = edb_allocate(db, size);
   if (ret < 0) {
     ret -= 100;
     goto err;
@@ -94,11 +94,11 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
 
   if (db->size == 0) {
     // new or overwritten file
-    edb_init(db);
+    // edb_init(db);
   }
   else {
     // existing file
-    edb_check(db);
+    // edb_check(db);
   }
 
   return ret;
@@ -150,7 +150,7 @@ void edb_map_close(edb *db) {
 #endif
 }
 
-int edb_map(edb *db, u64 size) {
+int edb_allocate(edb *db, u64 size) {
   if (db == NULL) return -1;
   int ret = 0;
 
@@ -160,7 +160,7 @@ int edb_map(edb *db, u64 size) {
     db->h_file,
     NULL,
     db->readonly ? PAGE_READONLY : PAGE_READWRITE,
-    0, size, NULL
+    (DWORD) (size >> 32), (DWORD) size, NULL
   );
 
   if (db->h_mapping == NULL) {
@@ -216,6 +216,7 @@ int edb_map(edb *db, u64 size) {
   return ret;
 }
 
+/*
 int edb_check(const edb *db) {
   return 0;
 }
@@ -223,7 +224,6 @@ int edb_check(const edb *db) {
 int edb_init(edb *db) {
   return 0;
 }
-
 
 char* edb_get(const edb *db,
     const char* key, uint32_t nkey) {
@@ -237,4 +237,5 @@ int edb_put(edb *db,
 
   return 0;
 }
+*/
 

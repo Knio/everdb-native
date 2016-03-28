@@ -1,5 +1,4 @@
 
-
 edb: src/*.c
 	gcc $+
 
