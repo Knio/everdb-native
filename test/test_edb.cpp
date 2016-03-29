@@ -35,8 +35,12 @@ TEST_CASE("open") {
   }
 
   SECTION("resize") {
-    REQUIRE(edb_allocate(&db, BLOCK_SIZE) == 0);
-    REQUIRE(db.size == BLOCK_SIZE);
+      REQUIRE(edb_allocate(&db, BLOCK_SIZE) == 0);
+      REQUIRE(db.size == BLOCK_SIZE);
+      REQUIRE(edb_allocate(&db, BLOCK_SIZE * 4) == 0);
+      REQUIRE(db.size == BLOCK_SIZE * 4);
+      REQUIRE(edb_allocate(&db, BLOCK_SIZE) == 0);
+      REQUIRE(db.size == BLOCK_SIZE);
   }
 
   edb_close(&db);
