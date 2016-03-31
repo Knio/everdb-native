@@ -153,9 +153,30 @@ void edb_map_close(edb *db) {
 int edb_allocate(edb *db, u64 size) {
   if (db == NULL) return -1;
   int ret = 0;
+  long size_hi = 0;
 
   edb_map_close(db);
-#ifdef _WIN32
+
+  #ifdef _WIN32
+  if (db->size > size) {
+    // truncate file
+    size_hi = (long) (size >> 32);
+    SetFilePointer(
+      db->h_file,
+      (DWORD) (size),
+      &size_hi,
+      FILE_BEGIN
+    );
+    if (GetLastError() != 0) {
+      ret = -34;
+      goto err;
+    }
+    if (SetEndOfFile(db->h_file) == 0) {
+      ret = -13;
+      goto err;
+    }
+  }
+
   db->h_mapping = CreateFileMapping(
     db->h_file,
     NULL,
@@ -178,7 +199,8 @@ int edb_allocate(edb *db, u64 size) {
     ret = -9;
     goto err;
   }
-#elif __linux__
+
+  #elif __linux__
   if (db->size < size) {
     if (posix_fallocate(db->h_file, 0, size) != 0) {
       ret = -11;

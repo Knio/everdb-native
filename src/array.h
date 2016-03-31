@@ -11,7 +11,7 @@ typedef struct {
     u8 item_size;
     u32 length;
     u32 capacity;
-    page_header;
+    struct page_header_t;
 } array_header;
 
 int array_init(edb *db, const u32 page, const u8 item_size);
