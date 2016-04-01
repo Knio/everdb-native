@@ -7,6 +7,9 @@
 
 #ifdef __linux__
 #include <string.h> //memcpy
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 
