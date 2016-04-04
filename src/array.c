@@ -154,10 +154,10 @@ int array_push(edb *db, const u32 page, const void *data) {
 int array_pop(edb *db, const u32 page, void* data) {
   int err = 0;
   u32 index = array_length(db, page);
-  if ((err = array_resize(db, page, index + 1))) {
+  if ((err = array_get(db, page, index - 1, data))) {
     goto err;
   }
-  if ((err = array_get(db, page, index, data))) {
+  if ((err = array_resize(db, page, index - 1))) {
     goto err;
   }
   err:

@@ -37,7 +37,14 @@ typedef struct {
 #endif
   block data;
   u64 size;
+  u32 freelist;
 } edb;
+
+typedef struct edb_root_t {
+  u32 txn_id;
+  u32 committed;
+  u32 freelist;
+} edb_root;
 
 
 /**
@@ -51,7 +58,10 @@ int edb_open(edb *db, const char* f_name,
 
 void edb_close(edb *db);
 
-int edb_allocate(edb *db, u64 size);
+int edb_resize(edb *db, u64 size);
+
+u32 edb_allocate_block(edb *db);
+u32 edb_free_block(edb *db);
 
 #if 0
 /**
