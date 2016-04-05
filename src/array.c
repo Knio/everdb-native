@@ -4,7 +4,7 @@
 #include <string.h> //memcpy
 #endif
 
-int array_init(edb *db, const u32 page, const u8 item_size) {
+int array_init(edb* db, const u32 page, const u8 item_size) {
   page_init(db, page);
   const block page_table = BLOCK(db->data, page);
   array_header *ah = HEADER(page_table, array_header);
@@ -13,9 +13,9 @@ int array_init(edb *db, const u32 page, const u8 item_size) {
 }
 
 
-int array_resize(edb *db, const u32 page, const u32 length) {
-  const block page_table = BLOCK(db->data, page);
-  array_header *ah = HEADER(page_table, array_header);
+int array_resize(edb* db, const u32 page, const u32 length) {
+  block pt = BLOCK(db->data, page);
+  array_header* ah = HEADER(pt, array_header);
 
   if (ah->length == length) { return 0; }
 
@@ -24,13 +24,15 @@ int array_resize(edb *db, const u32 page, const u32 length) {
     if (ah->capacity != small_capacity) {
       // make small block
       page_resize(db, page, 0);
+      pt = BLOCK(db->data, page);
+      ah = HEADER(pt, array_header);
       ah->capacity = small_capacity;
     }
 
     if (ah->length < length) {
       // grow, init new items
       // memset(
-      //   page_table + ah->length * ah->item_size,
+      //   pt + ah->length * ah->item_size,
       //   0,
       //   (length - ah->length) * ah->item_size
       // );
@@ -39,7 +41,8 @@ int array_resize(edb *db, const u32 page, const u32 length) {
     else if (ah->length < length) {
       // shrink, cleanup truncated items
       memset(
-        page_table + length * ah->item_size,
+        pt
+          + length * ah->item_size,
         0,
         (ah->length - length) * ah->item_size
       );
@@ -53,30 +56,43 @@ int array_resize(edb *db, const u32 page, const u32 length) {
   const u32 blocks = (length + items_per_block - 1) / items_per_block;
   const u32 capacity = items_per_block * blocks;
 
-  { volatile int* p = 0; *p = 1; }
+  if (ah->capacity == capacity && ah->length < length) {
+    // shrink, cleanup last block
+    block last_block = page_get_host_block(db, page, blocks - 1);
+    memset(
+      last_block
+        + (length % items_per_block) * ah->item_size,
+      0,
+      (ah->length - length) * ah->item_size
+    );
+  }
+  else {
+    page_resize(db, page, blocks);
+    pt = BLOCK(db->data, page);
+    ah = HEADER(pt, array_header);
+  }
 
-  page_resize(db, page, blocks);
   ah->capacity = capacity;
   ah->length = length;
   return 0;
 }
 
 
-u32 array_length(const edb *db, const u32 page) {
+u32 array_length(const edb* db, const u32 page) {
   const block page_table = BLOCK(db->data, page);
   const array_header *ah = HEADER(page_table, array_header);
   return ah->length;
 }
 
 
-u32 array_capacity(const edb *db, const u32 page) {
+u32 array_capacity(const edb* db, const u32 page) {
   const block page_table = BLOCK(db->data, page);
   const array_header *ah = HEADER(page_table, array_header);
   return ah->capacity;
 }
 
 
-void* array_data(const edb *db, const u32 page, const u32 index) {
+void* array_data(const edb* db, const u32 page, const u32 index) {
   const block page_table = BLOCK(db->data, page);
   const array_header *ah = HEADER(page_table, array_header);
 
@@ -101,9 +117,9 @@ void* array_data(const edb *db, const u32 page, const u32 index) {
 }
 
 
-int array_get(const edb *db, const u32 page, const u32 index, void* data) {
+int array_get(const edb* db, const u32 page, const u32 index, void* data) {
   const block page_table = BLOCK(db->data, page);
-  const array_header *ah = HEADER(page_table, array_header);
+  const array_header* ah = HEADER(page_table, array_header);
 
   void* element = array_data(db, page, index);
   if (element == NULL) {
@@ -119,9 +135,9 @@ int array_get(const edb *db, const u32 page, const u32 index, void* data) {
 }
 
 
-int array_set(edb *db, const u32 page, const u32 index, const void* data) {
+int array_set(edb* db, const u32 page, const u32 index, const void* data) {
   const block page_table = BLOCK(db->data, page);
-  const array_header *ah = HEADER(page_table, array_header);
+  const array_header* ah = HEADER(page_table, array_header);
 
   void* element = array_data(db, page, index);
   if (element == NULL) {
@@ -137,7 +153,7 @@ int array_set(edb *db, const u32 page, const u32 index, const void* data) {
 }
 
 
-int array_push(edb *db, const u32 page, const void *data) {
+int array_push(edb* db, const u32 page, const void *data) {
   int err = 0;
   u32 index = array_length(db, page);
   if ((err = array_resize(db, page, index + 1))) {
@@ -151,7 +167,7 @@ int array_push(edb *db, const u32 page, const void *data) {
 }
 
 
-int array_pop(edb *db, const u32 page, void* data) {
+int array_pop(edb* db, const u32 page, void* data) {
   int err = 0;
   u32 index = array_length(db, page);
   if ((err = array_get(db, page, index - 1, data))) {

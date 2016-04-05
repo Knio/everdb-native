@@ -241,24 +241,29 @@ int edb_resize(edb *db, u64 size) {
 
 u32 edb_allocate_block(edb *db) {
   int err = 0;
-  u32 len = 0;
-  if (err = array_length(db, db->freelist, &len)) {
-    // bads
-    return 0;
-  }
+  u32 len = array_length(db, db->freelist);
 
   if (len > 0) {
     u32 block;
     if (err = array_pop(db, db->freelist, &block)) {
-      // bads
+      // setlasterror?
       return 0;
     }
     return block;
   }
 
+  else {
+    // TODO allocate
+    // TODO after resizing, db->data has changed and all local pointers
+    // need to be updated!
+    return 0;
+  }
+
 }
 
-
+int edb_free_block(edb *db, u32 block) {
+  return array_push(db, db->freelist, block);
+}
 
 /*
 int edb_check(const edb *db) {

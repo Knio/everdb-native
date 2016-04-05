@@ -61,7 +61,7 @@ void edb_close(edb *db);
 int edb_resize(edb *db, u64 size);
 
 u32 edb_allocate_block(edb *db);
-u32 edb_free_block(edb *db);
+int edb_free_block(edb *db, u32 block);
 
 #if 0
 /**
