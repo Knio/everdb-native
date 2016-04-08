@@ -34,9 +34,15 @@ u64 file_size(edb *db) {
 }
 
 
-TEST_CASE("open") {
+TEST_CASE("structs") {
+  REQUIRE(sizeof(page_header) == 4);
+  REQUIRE(sizeof(array_header) == 12);
 
-  edb *db = new edb;;
+}
+
+
+TEST_CASE("open") {
+  edb *db = new edb;
 
   // open new db + overwrite
   REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
@@ -92,11 +98,9 @@ TEST_CASE("array") {
   u64 x = 42, y = 43;
   array_init(db, 0, sizeof(u64));
 
-  REQUIRE(sizeof(page_header) == 12);
-
-  block page_table = BLOCK(db->data, 0);
+  char* pt = BLOCK(db, 0);
   const array_header *ah = (array_header*)
-      (page_table + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
+      (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
   REQUIRE(ah->item_size == 8);
 
   // array is length 0
@@ -138,9 +142,10 @@ TEST_CASE("array") {
     REQUIRE(edb_open(db, "test.db", 0, 0) == 0);
     REQUIRE(db->size == BLOCK_SIZE * 2);
 
-    page_table = BLOCK(db->data, 0);
+    pt = BLOCK(db, 0);
     ah = (array_header*)
-        (page_table + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
+      (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
+
     REQUIRE(ah->item_size == 8);
     REQUIRE(array_length(db, 0) == 1);
     REQUIRE(array_get(db, 0, 0, &y) == 0);

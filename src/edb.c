@@ -190,7 +190,7 @@ int edb_resize(edb *db, u64 size) {
     goto err;
   }
 
-  db->data = (block) MapViewOfFile(
+  db->data = MapViewOfFile(
     db->h_mapping,
     db->readonly ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,
     0, 0, 0
@@ -214,7 +214,7 @@ int edb_resize(edb *db, u64 size) {
       goto err;
     }
   }
-  db->data = (block) mmap(
+  db->data = mmap(
     NULL,
     size,
     PROT_READ |

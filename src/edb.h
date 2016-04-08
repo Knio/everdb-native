@@ -7,21 +7,24 @@
 #include <windows.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define BLOCK_BITS (12) // 4096
 #define BLOCK_SIZE (1 << BLOCK_BITS)
 #define BLOCK_MASK (BLOCK_SIZE - 1)
+
 
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-typedef char* block;
+typedef struct page_t {
+  u8 data[BLOCK_SIZE];
+} page;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Hashdb object
@@ -35,10 +38,11 @@ typedef struct {
   int h_file;
   void* h_map;
 #endif
-  block data;
+  char* data;
   u64 size;
   u32 freelist;
 } edb;
+
 
 typedef struct edb_root_t {
   u32 txn_id;
@@ -63,24 +67,9 @@ int edb_resize(edb *db, u64 size);
 u32 edb_allocate_block(edb *db);
 int edb_free_block(edb *db, u32 block);
 
-#if 0
-/**
- * lookup a key
- * @return value of key
- */
-char* edb_get(const edb *db,
-    const char* key, u32 nkey);
 
-/**
- * Insert or overwrite a key
- */
-int edb_put(edb *db,
-    const char* key, u32 nkey,
-    const char* value, u32 nvalue);
-#endif
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif
