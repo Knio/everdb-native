@@ -13,6 +13,7 @@ typedef struct array_header_t {
     u32 capacity;
 } array_header;
 
+#pragma warning(disable:4201)
 typedef struct page_table_array_t {
   union {
     struct page_table_t;
@@ -28,7 +29,7 @@ typedef struct page_table_array_t {
 } page_table_array;
 
 
-int array_init(edb* db, const u32 root, const u8 item_size);
+void array_init(edb* db, const u32 root, const u8 item_size);
 int array_resize(edb* db, const u32 root, const u32 length);
 
 u32 array_length(const edb* db, const u32 root);

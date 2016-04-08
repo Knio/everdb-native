@@ -4,6 +4,7 @@
 #include "../src/edb.h"
 #include "../src/page.h"
 #include "../src/array.h"
+#include "../src/hash.h"
 
 #ifdef __linux__
 #include <string.h> //memcpy

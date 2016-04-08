@@ -24,7 +24,7 @@ typedef struct page_header_t {
   // u32 checksum;
 } page_header;
 
-
+#pragma warning(disable:4201)
 typedef struct page_table_t {
   union {
     struct page_t;

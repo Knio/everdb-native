@@ -244,12 +244,12 @@ u32 edb_allocate_block(edb *db) {
   u32 len = array_length(db, db->freelist);
 
   if (len > 0) {
-    u32 block;
-    if (err = array_pop(db, db->freelist, &block)) {
+    u32 page;
+    if (err = array_pop(db, db->freelist, &page)) {
       // setlasterror?
       return 0;
     }
-    return block;
+    return page;
   }
 
   else {
@@ -261,8 +261,8 @@ u32 edb_allocate_block(edb *db) {
 
 }
 
-int edb_free_block(edb *db, u32 block) {
-  return array_push(db, db->freelist, block);
+int edb_free_block(edb *db, u32 page) {
+  return array_push(db, db->freelist, &page);
 }
 
 /*

@@ -9,6 +9,7 @@
 #define INDEX_PAGE(db, page) ((index_page*) (db->data + BLOCK_SIZE * page))
 #define DATA_PAGE( db, page)       ((page*) (db->data + BLOCK_SIZE * page))
 
+
 typedef struct index_page_t {
   u32 data_blocks[INDEX_SIZE];
 } index_page;
