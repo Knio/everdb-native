@@ -1,4 +1,5 @@
 #include "edb.h"
+#include "math.h"
 #include "page.h"
 #include "array.h"
 
@@ -16,8 +17,6 @@
 #endif
 
 
-int
-edb_resize(edb *db, u64 size);
 void
 edb_map_close(edb *db);
 int
@@ -27,19 +26,19 @@ edb_check(const edb *db);
 
 
 int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
-  int ret = 0;
-  u64 size = 0;
+  int err = 0;
+  u64 nblocks = 0;
+  int new = 0;
   memset(db, 0, sizeof(edb));
 
 
   if (readonly && overwrite) {
-    ret = -4;
+    err = -4;
     goto err;
   }
   db->readonly = readonly;
 
-#ifdef _WIN32
-
+  #ifdef _WIN32
   db->h_file = CreateFileA(
     fname,
     readonly ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE),
@@ -48,17 +47,18 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
     0, NULL
   );
   if (db->h_file == INVALID_HANDLE_VALUE) {
-    ret = -1;
+    err = EDB_ERROR_FILE_OPEN;
     goto err;
   }
 
   LARGE_INTEGER f_size;
   if (!GetFileSizeEx(db->h_file, &f_size)) {
-    ret = -3;
+    err = EDB_ERROR_FILE_SIZE;
     goto err;
   }
-  db->size = f_size.QuadPart;
-#elif __linux__
+  db->filesize = f_size.QuadPart;
+
+  #elif __linux__
   db->h_file = open(fname,
     (readonly ? O_RDONLY : O_RDWR) |
     (overwrite ? O_TRUNC : 0) |
@@ -66,34 +66,34 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
     0644
   );
   if (db->h_file < 0) {
-    ret = -1;
+    err = EDB_ERROR_FILE_OPEN;
     goto err;
   }
   struct stat fi;
   if (fstat(db->h_file, &fi) < 0) {
-    ret = -3;
+    err = EDB_ERROR_FILE_SIZE;
     goto err;
   }
-  db->size = fi.st_size;
-#endif
-  if (db->size & BLOCK_MASK) {
-    ret = -5;
-    goto err;
-  }
+  db->filesize = fi.st_size;
+  #endif
 
-  size = db->size;
-
-  if (size == 0) {
-    size = BLOCK_SIZE;
-  }
-
-  ret = edb_resize(db, size);
-  if (ret < 0) {
-    ret -= 100;
+  if (db->filesize & BLOCK_MASK) {
+    err = -5;
     goto err;
   }
 
-  if (db->size == 0) {
+  nblocks = db->filesize >> BLOCK_BITS;
+
+  if (nblocks == 0) {
+    nblocks = 1;
+    new = 1;
+  }
+
+  if (err = edb_resize(db, nblocks)) {
+    goto err;
+  }
+
+  if (new) {
     // new or overwritten file
     // edb_init(db);
   }
@@ -102,7 +102,7 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
     // edb_check(db);
   }
 
-  return ret;
+  return err;
 
   err:
 
@@ -111,82 +111,83 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
   if (db != NULL) {
     memset(db, 0, sizeof(edb));
   }
-  return ret;
+  return err;
 }
 
 void edb_close(edb *db) {
-  if (db == NULL) return;
-
+  if (db == NULL) { return; }
   edb_map_close(db);
-#ifdef _WIN32
-  if (db->h_file != INVALID_HANDLE_VALUE) {
+
+  #ifdef _WIN32
+  if (db->h_file) {
     CloseHandle(db->h_file);
-    db->h_file = INVALID_HANDLE_VALUE;
   }
-#elif __linux__
-  if (db->h_file >= 0) {
+
+  #elif __linux__
+  if (db->h_file) {
     close(db->h_file);
-    db->h_file = -1;
   }
-#endif
+  #endif
+
+  db->h_file = NULL;
 }
 
 void edb_map_close(edb *db) {
-  if (db == NULL) return;
-#ifdef _WIN32
-  if (db->data != NULL) {
+  #ifdef _WIN32
+  if (db->data) {
     UnmapViewOfFile(db->data);
     db->data = NULL;
   }
-
-  if (db->h_mapping != NULL) {
+  if (db->h_mapping) {
     CloseHandle(db->h_mapping);
     db->h_mapping = NULL;
   }
-#elif __linux__
-  if(db->data != NULL) {
+
+  #elif __linux__
+  if(db->data) {
     munmap(db->data, db->size);
     db->data = NULL;
   }
-#endif
+  #endif
 }
 
-int edb_resize(edb *db, u64 size) {
-  if (db == NULL) return -1;
-  int ret = 0;
+int edb_resize(edb *db, u32 nblocks) {
+  int err = 0;
+  u64 filesize = nblocks << BLOCK_BITS;
   long size_hi = 0;
 
   edb_map_close(db);
 
   #ifdef _WIN32
-  if (db->size > size) {
+  if (db->filesize > filesize) {
     // truncate file
-    size_hi = (long) (size >> 32);
+    size_hi = (long) (filesize >> 32);
     SetFilePointer(
       db->h_file,
-      (DWORD) (size),
+      (DWORD) (filesize),
       &size_hi,
       FILE_BEGIN
     );
     if (GetLastError() != 0) {
-      ret = -34;
+      err = -34;
       goto err;
     }
     if (SetEndOfFile(db->h_file) == 0) {
-      ret = -13;
+      err = -13;
       goto err;
     }
   }
 
+  // win32 grows the file when a mapping is made
   db->h_mapping = CreateFileMapping(
     db->h_file,
     NULL,
     db->readonly ? PAGE_READONLY : PAGE_READWRITE,
-    (DWORD) (size >> 32), (DWORD) size, NULL
+    (DWORD) (filesize >> 32), (DWORD) filesize, NULL
   );
 
   if (db->h_mapping == NULL) {
-    ret = -2;
+    err = -2;
     goto err;
   }
 
@@ -197,26 +198,26 @@ int edb_resize(edb *db, u64 size) {
   );
 
   if (db->data == NULL) {
-    ret = -9;
+    err = -9;
     goto err;
   }
 
   #elif __linux__
-  if (db->size < size) {
-    if (posix_fallocate(db->h_file, 0, size) != 0) {
-      ret = -11;
+  if (db->filesize < filesize) {
+    if (posix_fallocate(db->h_file, 0, filesize) != 0) {
+      err = -11;
       goto err;
     }
   }
-  if (db->size > size) {
-    if (ftruncate(db->h_file, size) < 0) {
-      ret = -12;
+  if (db->filesize > filesize) {
+    if (ftruncate(db->h_file, filesize) < 0) {
+      err = -12;
       goto err;
     }
   }
   db->data = mmap(
     NULL,
-    size,
+    filesize,
     PROT_READ |
       (db->readonly ? 0 : PROT_WRITE),
     MAP_SHARED,
@@ -225,19 +226,23 @@ int edb_resize(edb *db, u64 size) {
   );
   if(db->data == (char*) MAP_FAILED) {
     db->data = NULL;
-    ret = -9;
+    err = -9;
     goto err;
   }
-#endif
-  db->size = size;
+  #endif
 
-  return ret;
+  db->filesize = filesize;
+  db->nblocks = nblocks;
+
+  return err;
 
   err:
   edb_map_close(db);
-  db->size = 0;
-  return ret;
+  db->filesize = 0;
+  db->nblocks = 0;
+  return err;
 }
+
 
 u32 edb_allocate_block(edb *db) {
   int err = 0;
@@ -253,10 +258,17 @@ u32 edb_allocate_block(edb *db) {
   }
 
   else {
-    // TODO allocate
-    // TODO after resizing, db->data has changed and all local pointers
+    u32 nblocks = db->nblocks;
+    u32 step = next_power_of_two(nblocks >> 3);
+
+    // NOTE: after resizing, db->data has changed and all local pointers
     // need to be updated!
-    return 0;
+    edb_resize(db, (nblocks + step) & ~(step-1));
+
+    for(u32 i = nblocks + 1; i < db->nblocks; i++) {
+      array_push(db, db->freelist, &i);
+    }
+    return nblocks;
   }
 
 }
