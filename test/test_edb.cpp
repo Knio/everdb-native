@@ -30,6 +30,8 @@ u64 file_size(edb *db) {
   #endif
 }
 
+
+
 TEST_CASE("open") {
   edb *db = new edb;
 

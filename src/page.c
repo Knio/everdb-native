@@ -19,7 +19,7 @@ typedef struct index_page_t {
 // returns 0 on error
 u32 page_get_host_index(const edb* db, const u32 root, const u32 index) {
   page_table* pt = PAGE_TABLE(db, root);
-  if (pt->nblocks < index) {
+  if (index > pt->nblocks) {
     return 0;
   }
 
@@ -34,7 +34,8 @@ u32 page_get_host_index(const edb* db, const u32 root, const u32 index) {
   }
 
   // level 2 large block
-  index_page* ip = INDEX_PAGE(db, pt->index_blocks[INDEX0(index)]);
+  u32 index_block = pt->index_blocks[INDEX0(index)];
+  index_page* ip = INDEX_PAGE(db, index_block);
   return ip->data_blocks[INDEX1(index)];
 }
 
@@ -53,10 +54,7 @@ void page_init(edb* db, const u32 root) {
 int page_resize(edb* db, const u32 root, const u32 nblocks) {
   int err = 0;
   page_table* pt = PAGE_TABLE(db, root);
-
-  if (pt->nblocks == 0) {
-    return -2;
-  }
+  index_page* ip;
 
   while (pt->nblocks < nblocks && pt->nblocks < LEVEL_ONE) {
     // grow
@@ -70,7 +68,10 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
 
   while (pt->nblocks < nblocks) {
     // grow
-    u32 index_block = pt->index_blocks[INDEX0(pt->nblocks)];
+    u32 index_index = INDEX0(pt->nblocks);
+    u32 data_index  = INDEX1(pt->nblocks);
+    u32 index_block = pt->index_blocks[index_index];
+
     if (index_block == 0) {
       // allocate new index page
       index_block = edb_allocate_block(db);
@@ -79,9 +80,8 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
         goto err;
       }
       pt = PAGE_TABLE(db, root);
-      pt->index_blocks[INDEX0(pt->nblocks)] = index_block;
+      pt->index_blocks[index_index] = index_block;
     }
-    index_page* ip = INDEX_PAGE(db, index_block);
 
     u32 new_block = edb_allocate_block(db);
     if (new_block == 0) {
@@ -89,25 +89,30 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
       goto err;
     }
     pt = PAGE_TABLE(db, root);
-    ip->data_blocks[pt->nblocks++] = new_block;
+    ip = INDEX_PAGE(db, index_block);
+    ip->data_blocks[data_index] = new_block;
+    pt->nblocks++;
   }
-
 
   while (pt->nblocks > nblocks && pt->nblocks > LEVEL_ONE) {
     // shrink
     u32 index_index = INDEX0(pt->nblocks - 1);
     u32 data_index  = INDEX1(pt->nblocks - 1);
     u32 index_block = pt->index_blocks[index_index];
-    index_page* ip = INDEX_PAGE(db, index_block);
     u32 data_block = ip->data_blocks[data_index];
 
     edb_free_block(db, data_block);
+    pt = PAGE_TABLE(db, root);
+    ip = INDEX_PAGE(db, index_block);
+
     ip->data_blocks[data_index] = 0;
     if (INDEX1(pt->nblocks - 1) == 0) {
       // free index page
       if (err = edb_free_block(db, index_block)) {
         goto err;
       }
+      pt = PAGE_TABLE(db, root);
+      ip = INDEX_PAGE(db, index_block);
       pt->index_blocks[index_index] = 0;
     }
     pt->nblocks--;
@@ -119,6 +124,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
     if (err = edb_free_block(db, data_block)) {
       goto err;
     }
+    pt = PAGE_TABLE(db, root);
     pt->data_blocks[pt->nblocks - 1] = 0;
     pt->nblocks--;
   }

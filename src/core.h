@@ -33,13 +33,13 @@ typedef struct {
 #endif
   char* data;
   u64 filesize;
-  u64 nblocks;
+  u32 nblocks;
   u32 freelist;
 } edb;
 
 
 u32 edb_allocate_block(edb *db);
-int edb_free_block(edb *db, u32 block);
+int edb_free_block(edb *db, const u32 block);
 
 #ifdef __cplusplus
 }

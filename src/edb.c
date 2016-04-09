@@ -24,7 +24,7 @@ edb_init(edb *db);
 
 int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
   int err = 0;
-  u64 nblocks = 0;
+  u32 nblocks = 0;
   int new = 0;
   memset(db, 0, sizeof(edb));
 
@@ -78,7 +78,7 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
     goto err;
   }
 
-  nblocks = db->filesize >> BLOCK_BITS;
+  nblocks = (u32) (db->filesize >> BLOCK_BITS);
 
   if (nblocks == 0) {
     nblocks = 1;

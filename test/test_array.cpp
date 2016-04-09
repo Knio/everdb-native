@@ -10,7 +10,9 @@
 #include <unistd.h>
 #endif
 
+
 TEST_CASE("array") {
+  REQUIRE(sizeof(array_header) == 12);
 
   edb *db = new edb;
 
@@ -76,10 +78,7 @@ TEST_CASE("array") {
     REQUIRE(array_length(db, 0) == 1);
     REQUIRE(array_get(db, 0, 0, &y) == 0);
     REQUIRE(y == 42);
-
-
   }
-
 
   SECTION("push/pop") {
     x = 12;
