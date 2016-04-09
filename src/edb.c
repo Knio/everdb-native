@@ -1,6 +1,5 @@
 #include "edb.h"
 #include "math.h"
-#include "page.h"
 #include "array.h"
 
 #ifdef _WIN32
@@ -21,8 +20,6 @@ void
 edb_map_close(edb *db);
 int
 edb_init(edb *db);
-int
-edb_check(const edb *db);
 
 
 int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
@@ -30,7 +27,6 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
   u64 nblocks = 0;
   int new = 0;
   memset(db, 0, sizeof(edb));
-
 
   if (readonly && overwrite) {
     err = -4;

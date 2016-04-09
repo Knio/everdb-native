@@ -1,6 +1,7 @@
 #ifndef PAGE_H
 #define PAGE_H
-#include "edb.h"
+
+#include "core.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,11 +19,17 @@ extern "C" {
 #define BLOCK(db, index) (db->data + (index * BLOCK_SIZE))
 
 
+typedef struct page_t {
+  u8 data[BLOCK_SIZE];
+} page;
+
+
 typedef struct page_header_t {
   // u8 header_length;
   u32 nblocks;
   // u32 checksum;
 } page_header;
+
 
 #pragma warning(disable:4201)
 typedef struct page_table_t {

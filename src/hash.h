@@ -1,6 +1,7 @@
 #ifndef HASH_H
 #define HASH_H
-#include "edb.h"
+
+#include "core.h"
 #include "page.h"
 
 #ifdef __cplusplus
