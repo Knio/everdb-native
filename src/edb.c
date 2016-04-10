@@ -27,6 +27,9 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
   u32 nblocks = 0;
   int is_new = 0;
   memset(db, 0, sizeof(edb));
+  #ifdef __linux__
+  db->h_file = -1;
+  #endif
 
   if (readonly && overwrite) {
     err = -4;
@@ -118,14 +121,13 @@ void edb_close(edb *db) {
   if (db->h_file) {
     CloseHandle(db->h_file);
   }
-
+  db->h_file = NULL;
   #elif __linux__
-  if (db->h_file) {
+  if (db->h_file >= 0) {
     close(db->h_file);
+    db->h_file = -1;
   }
   #endif
-
-  db->h_file = NULL;
 }
 
 void edb_map_close(edb *db) {
