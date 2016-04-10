@@ -30,7 +30,7 @@ typedef struct page_table_array_t {
 } page_table_array;
 
 
-void array_init(edb* db, const u32 root, const u8 item_size);
+int array_init(edb* db, const u32 root, const u8 item_size);
 int array_resize(edb* db, const u32 root, const u32 length);
 
 u32 array_length(const edb* db, const u32 root);

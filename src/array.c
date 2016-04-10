@@ -6,10 +6,11 @@
 
 #define PAGE_TABLE_ARRAY(db, page) ((page_table_array*) (db->data + BLOCK_SIZE * page))
 
-void array_init(edb* db, const u32 root, const u8 item_size) {
+int array_init(edb* db, const u32 root, const u8 item_size) {
   page_init(db, root);
   page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
   pt->item_size = item_size;
+  return 0;
 }
 
 
