@@ -25,7 +25,7 @@ edb_init(edb *db);
 int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
   int err = 0;
   u32 nblocks = 0;
-  int new = 0;
+  int is_new = 0;
   memset(db, 0, sizeof(edb));
 
   if (readonly && overwrite) {
@@ -82,14 +82,14 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
 
   if (nblocks == 0) {
     nblocks = 1;
-    new = 1;
+    is_new = 1;
   }
 
   if (err = edb_resize(db, nblocks)) {
     goto err;
   }
 
-  if (new) {
+  if (is_new) {
     // new or overwritten file
     // edb_init(db);
   }
