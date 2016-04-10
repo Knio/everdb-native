@@ -109,7 +109,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
     ip->data_blocks[data_index] = 0;
     if (INDEX1(pt->nblocks - 1) == 0) {
       // free index page
-      if (err = edb_free_block(db, index_block)) {
+      if ((err = edb_free_block(db, index_block))) {
         goto err;
       }
       pt = PAGE_TABLE(db, root);
@@ -122,7 +122,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
   while (pt->nblocks > nblocks) {
     // shrink
     u32 data_block = pt->data_blocks[pt->nblocks - 1];
-    if (err = edb_free_block(db, data_block)) {
+    if ((err = edb_free_block(db, data_block))) {
       goto err;
     }
     pt = PAGE_TABLE(db, root);

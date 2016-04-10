@@ -88,7 +88,7 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
     is_new = 1;
   }
 
-  if (err = edb_resize(db, nblocks)) {
+  if ((err = edb_resize(db, nblocks))) {
     goto err;
   }
 
@@ -248,7 +248,7 @@ u32 edb_allocate_block(edb *db) {
 
   if (len > 0) {
     u32 page;
-    if (err = array_pop(db, db->freelist, &page)) {
+    if ((err = array_pop(db, db->freelist, &page))) {
       // setlasterror?
       return 0;
     }
