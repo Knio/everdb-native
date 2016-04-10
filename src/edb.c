@@ -141,7 +141,7 @@ void edb_map_close(edb *db) {
 
   #elif __linux__
   if(db->data) {
-    munmap(db->data, db->size);
+    munmap(db->data, db->filesize);
     db->data = NULL;
   }
   #endif
