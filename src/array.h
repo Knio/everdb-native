@@ -14,7 +14,9 @@ typedef struct array_header_t {
     u32 capacity;
 } array_header;
 
+#ifdef _MSC_VER
 #pragma warning(disable:4201)
+#endif
 typedef struct page_table_array_t {
   union {
     struct page_table_t;
