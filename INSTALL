@@ -1,0 +1,23 @@
+Building on Linux:
+
+$ mkdir build && cd build
+$ cmake ..
+$ make
+
+To build with Debugging run cmake as follows:
+$ cmake .. -DCMAKE_BUILD_TYPE=Debug
+
+Tests can then be run using any of the following:
+
+This calls ctest
+$ make test 
+
+CMake Test Runner, executes all test exes and displays a summary
+$ ctest
+
+Directly calling the Test exe
+$ ./test/Test
+
+This gives the output you would get by calling the exe directly
+$ ctest -V
+
