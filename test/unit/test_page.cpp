@@ -66,4 +66,23 @@ TEST_CASE("page") {
 
   REQUIRE(index_page[0] == 510);
 
+  REQUIRE(page_resize(db, 0, 512) == 0);
+  REQUIRE(index_page[0] == 0);
+  REQUIRE(level2[0] == 0);
+  REQUIRE(freelist.back() == 511);
+
+  REQUIRE(page_resize(db, 0, 511) == 0);
+  REQUIRE(level1[511] == 0);
+  REQUIRE(level1[510] == 513);
+  REQUIRE(freelist.back() == 512);
+
+  REQUIRE(page_resize(db, 0, 1) == 0);
+  REQUIRE(level1[0] == 1023);
+  REQUIRE(level1[1] == 0);
+  REQUIRE(freelist.back() == 1022);
+
+  REQUIRE(page_resize(db, 0, 0) == 0);
+  REQUIRE(level1[0] == 0);
+  REQUIRE(freelist.back() == 1023);
+
 }

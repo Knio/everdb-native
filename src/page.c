@@ -99,6 +99,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
     u32 index_index = INDEX0(pt->nblocks - 1);
     u32 data_index  = INDEX1(pt->nblocks - 1);
     u32 index_block = pt->index_blocks[index_index];
+    ip = INDEX_PAGE(db, index_block);
     u32 data_block = ip->data_blocks[data_index];
 
     edb_free_block(db, data_block);
