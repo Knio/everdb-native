@@ -16,6 +16,8 @@ inline u32 next_power_of_two(u32 x) {
   return x + 1;
 }
 
+extern inline u32 next_power_of_two(u32 x);
+
 #ifdef __cplusplus
 }
 #endif
