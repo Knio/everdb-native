@@ -35,6 +35,8 @@ begin the very first transaction. this must manage the master blocks.
      + set `txn_committed` to false
      + increment `txn_id`
      + set the current master pointer to the new master block
+     + TODO: just zero, and set everything on `txn_commit_master`
+     + TODO: or just don't use CoW for master block
 
 
 ### txn_allocate_block() -> `newblock`
@@ -88,19 +90,28 @@ commit the current transaction
          * else: add it to `parent.freed{}`
      + for `newblock` ->  `oldblock` in `modified{}`:
          * if `oldblock` is a key in `parent.modified{}`:
-             - add `oldblock` to the freelist
+             - add `oldblock` to the freelist (it was copy-on-write allocated in the parent transaction)
              - set `parent.modified[newblock]` = `parent.modified[oldblock]`
              - pop `parent.modified[oldblock]`
          * else: add entry to `parent.modified{}`
-     + if a block was modified in the parent transaction, add `curblock` to the freelist
 
 
 ### txn_commit_master(`txn_state`)
- - for (`curblock`, `newblock`) in `modified{}`:
-     + if `curblock` is `NULL`, do nothing (leave an allocated block allocated)
-     + add `curblock` to the freelist (actually free a freed block, free a block that was modified)
+ - for `newblock` in `allocated{}`: do nothing
+ - for `oldblock` in `freed{}`:
+     + add `oldblock` to the freelist (actually delete a freed block)
+ - for `newblock` -> `oldblock` in `modified{}`:
+     + add `oldblock` to the freelist (delete the old copy of a block that was modified)
  - flush all modified blocks to disk
- - flush the current master block
  - set `txn_committed` to true on the current master
- - flush the current master block again
+ - flush the current master block to disk
+
+
+### txn_abort_master()
+TODO
+
+
+### NOTES
+ - the freelist will never grow beyond its size at `txn_begin_master` until in `txn_commit_master`, so it does not need to support growing in transactions (likewise, it need not support compacting during a transaction)
+ - TODO: if the freelist is transactioned, we can maybe avoid some operations on it as they will happen automatically
 
