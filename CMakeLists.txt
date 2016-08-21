@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 project(everdb-native)
 
 SET(CMAKE_C_FLAGS "-fms-extensions")
-SET(CMAKE_C_FLAGS_DEBUG "-g -Wall --coverage")
+SET(CMAKE_C_FLAGS_DEBUG "-std=c99 -g -Wall --coverage")
 SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fpermissive")
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 SET(CMAKE_LINKER_FLAGS_DEBUG "--coverage")
