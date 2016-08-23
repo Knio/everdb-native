@@ -1,0 +1,35 @@
+
+
+core
+    types
+    blocks
+
+
+io: core
+    open
+    close
+    mmap
+    resize
+
+page: core
+
+array: core, page
+
+hash: core, page
+
+btree: core
+
+sst: core
+
+heap: core, array
+
+txn: core
+
+...
+
+edb: core, io, array, hash
+    freelist
+    transacations
+    allocate
+    free
+
