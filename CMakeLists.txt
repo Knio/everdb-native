@@ -16,7 +16,8 @@ add_library(
     src/array.c
     src/edb.c
     src/hash.c
-    src/page.c)
+    src/page.c
+    src/txn.c)
 
 enable_testing()
 add_subdirectory(test)
