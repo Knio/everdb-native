@@ -42,7 +42,7 @@ u32 page_get_host_index(const edb* db, const u32 root, const u32 index) {
 
 // page page_get_host_page(const edb* db, const u32 root, const u32 index) {
 //   return DATA_PAGE(db, page_get_host_index(db, root, index));
-// }
+// }e
 
 
 void page_init(edb* db, const u32 root) {
@@ -126,8 +126,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
       goto err;
     }
     pt = PAGE_TABLE(db, root);
-    pt->data_blocks[pt->nblocks - 1] = 0;
-    pt->nblocks--;
+    pt->data_blocks[--pt->nblocks] = 0;
   }
 
   err:

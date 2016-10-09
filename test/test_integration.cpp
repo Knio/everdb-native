@@ -27,10 +27,13 @@ TEST_CASE("integration") {
   REQUIRE(ar != 0);
   REQUIRE(array_init(db, ar, sizeof(long)) == 0);
 
-  for (long i=0; i<999999; i++) {
+  long q = 100;
+  REQUIRE(array_push(db, ar, &q) == 0);
+  q = 200;
+  REQUIRE(array_push(db, ar, &q) == 0);
+
+  for (long i=0; i<1000000; i++) {
     REQUIRE(array_push(db, ar, &i) == 0);
   }
 
 }
-
-

@@ -15,6 +15,7 @@ int array_init(edb* db, const u32 root, const u8 item_size) {
 
 
 int array_resize(edb* db, const u32 root, const u32 length) {
+  int err = 0;
   page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
 
   if (pt->length == length) { return 0; }
@@ -25,7 +26,7 @@ int array_resize(edb* db, const u32 root, const u32 length) {
   ) / pt->item_size;
 
   if (length <= small_capacity) {
-    if (pt->capacity != small_capacity) {
+    if (pt->nblocks != 0) {
       // make small block
       page_resize(db, root, 0);
       pt = PAGE_TABLE_ARRAY(db, root);
@@ -41,42 +42,49 @@ int array_resize(edb* db, const u32 root, const u32 length) {
       // );
     }
 
-    else if (pt->length < length) {
+    else if (pt->length > length) {
       // shrink, cleanup truncated items
-      memset(
-        pt
-            + (length * pt->item_size),
-        0,
-        (pt->length - length) * pt->item_size
-      );
+      // memset(
+      //   pt
+      //       + (length * pt->item_size),
+      //   0,
+      //   (pt->length - length) * pt->item_size
+      // );
     }
 
     pt->length = length;
+    pt->capacity = small_capacity;
     return 0;
   }
 
   const u32 items_per_block = BLOCK_SIZE / pt->item_size;
-  const u32 blocks = (length + items_per_block - 1) / items_per_block;
-  const u32 capacity = items_per_block * blocks;
+  const u32 nblocks = (length + items_per_block - 1) / items_per_block;
+  const u32 capacity = items_per_block * nblocks;
 
-  if (pt->capacity == capacity && pt->length < length) {
-    // shrink, cleanup last block
-    char* last_block = BLOCK(db, page_get_host_index(db, root, blocks - 1));
-    memset(
-      last_block
-        + (length % items_per_block) * pt->item_size,
-      0,
-      (pt->length - length) * pt->item_size
-    );
+  if (pt->nblocks == nblocks) {
+
+    if (pt->length < length) {
+      // shrink, cleanup last block
+      char* last_block = BLOCK(db, page_get_host_index(db, root, nblocks - 1));
+      memset(
+        last_block
+          + (length % items_per_block) * pt->item_size,
+        0,
+        (pt->length - length) * pt->item_size
+      );
+    }
   }
-  else {
-    page_resize(db, root, blocks);
-    pt = PAGE_TABLE_ARRAY(db, root);
+
+  else { // capacity is different
+    if (err = page_resize(db, root, nblocks)) {
+      goto err;
+    }
   }
 
   pt->capacity = capacity;
   pt->length = length;
-  return 0;
+
+  err: return err;
 }
 
 

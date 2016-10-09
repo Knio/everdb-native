@@ -4,7 +4,7 @@
 #include "../src/array.h"
 
 #ifdef __linux__
-#include <string.h> //memcpy
+#include <stdlib.h> //memcpy
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
