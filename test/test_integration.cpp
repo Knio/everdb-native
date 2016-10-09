@@ -11,8 +11,6 @@
 #endif
 
 
-
-
 TEST_CASE("integration") {
   edb *db = new edb;
 
