@@ -28,9 +28,10 @@ int array_resize(edb* db, const u32 root, const u32 length) {
   if (length <= small_capacity) {
     if (pt->nblocks != 0) {
       // make small block
-      page_resize(db, root, 0);
+      if (err = page_resize(db, root, 0)) {
+          goto err;
+      }
       pt = PAGE_TABLE_ARRAY(db, root);
-      pt->capacity = small_capacity;
     }
 
     if (pt->length < length) {
@@ -79,7 +80,9 @@ int array_resize(edb* db, const u32 root, const u32 length) {
     if (err = page_resize(db, root, nblocks)) {
       goto err;
     }
+    pt = PAGE_TABLE_ARRAY(db, root);
   }
+
 
   pt->capacity = capacity;
   pt->length = length;

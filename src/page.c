@@ -63,6 +63,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
       err = -1;
       goto err;
     }
+    pt = PAGE_TABLE(db, root);
     pt->data_blocks[pt->nblocks++] = new_block;
   }
 
