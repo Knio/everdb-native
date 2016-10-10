@@ -31,9 +31,28 @@ TEST_CASE("integration") {
   REQUIRE(array_push(db, ar, &q) == 0);
   q = 200;
   REQUIRE(array_push(db, ar, &q) == 0);
+  q = -1;
+  REQUIRE(array_pop(db, ar, &q) == 0);
+  REQUIRE(q == 200);
+
+  REQUIRE(array_pop(db, ar, &q) == 0);
+  REQUIRE(q == 100);
+
+  // array underrun
+  REQUIRE(array_pop(db, ar, &q) == 1);
 
   for (long i=0; i<1000000; i++) {
     REQUIRE(array_push(db, ar, &i) == 0);
   }
+
+  // for (long i=0; i<1000000; i++) {
+  //   REQUIRE(array_get(db, ar, i, &q) == 0);
+  //   REQUIRE(q == i); // y u fail?
+  // }
+
+  // for (long i=1000000-1; i>=0; i--) {
+  //   REQUIRE(array_pop(db, ar, &q) == 0);
+  //   REQUIRE(q == i);
+  // }
 
 }

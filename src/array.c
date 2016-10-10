@@ -64,7 +64,7 @@ int array_resize(edb* db, const u32 root, const u32 length) {
 
   if (pt->nblocks == nblocks) {
 
-    if (pt->length < length) {
+    if (pt->length > length) {
       // shrink, cleanup last block
       char* last_block = BLOCK(db, page_get_host_index(db, root, nblocks - 1));
       memset(
