@@ -41,18 +41,20 @@ TEST_CASE("integration") {
   // array underrun
   REQUIRE(array_pop(db, ar, &q) == 1);
 
-  for (long i=0; i<1000000; i++) {
+  const long N = 1000000;
+
+  for (long i=0; i<N; i++) {
     REQUIRE(array_push(db, ar, &i) == 0);
   }
 
-  // for (long i=0; i<1000000; i++) {
-  //   REQUIRE(array_get(db, ar, i, &q) == 0);
-  //   REQUIRE(q == i); // y u fail?
-  // }
+  for (long i=0; i<N; i++) {
+    REQUIRE(array_get(db, ar, i, &q) == 0);
+    REQUIRE(i == q);
+  }
 
-  // for (long i=1000000-1; i>=0; i--) {
-  //   REQUIRE(array_pop(db, ar, &q) == 0);
-  //   REQUIRE(q == i);
-  // }
+  for (long i=N-1; i>=0; i--) {
+    REQUIRE(array_pop(db, ar, &q) == 0);
+    REQUIRE(q == i);
+  }
 
 }

@@ -31,7 +31,7 @@ typedef struct {
   int h_file;
   void* h_map;
 #endif
-  char* data;
+  u8* data;
   u64 filesize;
   u32 nblocks;
   u32 freelist;

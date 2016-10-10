@@ -1,7 +1,8 @@
 #include "array.h"
 
 #ifdef __linux
-#include <string.h> //memcpy
+#include <stdlib.h> // malloc
+#include <string.h> // memset, memcpy
 #endif
 
 #define PAGE_TABLE_ARRAY(db, page) ((page_table_array*) (db->data + BLOCK_SIZE * page))
@@ -16,6 +17,7 @@ int array_init(edb* db, const u32 root, const u8 item_size) {
 
 int array_resize(edb* db, const u32 root, const u32 length) {
   int err = 0;
+  u8* data = NULL;
   page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
 
   if (pt->length == length) { return 0; }
@@ -28,10 +30,16 @@ int array_resize(edb* db, const u32 root, const u32 length) {
   if (length <= small_capacity) {
     if (pt->nblocks != 0) {
       // make small block
-      if (err = page_resize(db, root, 0)) {
+      data = malloc(small_capacity);
+      u8* first_block = BLOCK(db, page_get_host_index(db, root, 0));
+      memcpy(data, first_block, small_capacity * pt->item_size);
+      if ((err = page_resize(db, root, 0))) {
           goto err;
       }
       pt = PAGE_TABLE_ARRAY(db, root);
+      memcpy(pt->data, data, small_capacity * pt->item_size);
+      free(data);
+      data = NULL;
     }
 
     if (pt->length < length) {
@@ -66,7 +74,7 @@ int array_resize(edb* db, const u32 root, const u32 length) {
 
     if (pt->length > length) {
       // shrink, cleanup last block
-      char* last_block = BLOCK(db, page_get_host_index(db, root, nblocks - 1));
+      u8* last_block = BLOCK(db, page_get_host_index(db, root, nblocks - 1));
       memset(
         last_block
           + (length % items_per_block) * pt->item_size,
@@ -76,18 +84,37 @@ int array_resize(edb* db, const u32 root, const u32 length) {
     }
   }
 
-  else { // capacity is different
-    if (err = page_resize(db, root, nblocks)) {
+  else { // nblocks is different
+    if (pt->nblocks == 0) {
+      // small_capacity data is stored where the page table will go,
+      // need to save it
+      data = malloc(small_capacity * pt->item_size);
+      memcpy(data, pt->data, small_capacity * pt->item_size);
+      memset(pt->data, 0, small_capacity * pt->item_size);
+    }
+
+    if ((err = page_resize(db, root, nblocks))) {
       goto err;
     }
     pt = PAGE_TABLE_ARRAY(db, root);
+    if (data) {
+      u8* first_block = BLOCK(db, page_get_host_index(db, root, 0));
+      memcpy(first_block, data, small_capacity * pt->item_size);
+      free(data);
+      data = NULL;
+    }
   }
 
 
   pt->capacity = capacity;
   pt->length = length;
 
-  err: return err;
+  err:
+  if (data) {
+    free(data);
+    data = NULL;
+  }
+  return err;
 }
 
 
@@ -110,7 +137,7 @@ void* array_data(const edb* db, const u32 root, const u32 index) {
     return NULL;
   }
 
-  const char* item_block = pt;
+  const u8* block = pt->data;
   u32 local_index = index;
 
   if (pt->nblocks == 0) {
@@ -118,11 +145,11 @@ void* array_data(const edb* db, const u32 root, const u32 index) {
   }
   else {
     const u32 items_per_block = BLOCK_SIZE / pt->item_size;
-    item_block = BLOCK(db, page_get_host_index(db, root, index / items_per_block));
+    block = BLOCK(db, page_get_host_index(db, root, index / items_per_block));
     local_index = index % items_per_block;
   }
 
-  return (void*) (item_block + (local_index * pt->item_size));
+  return (void*) (block + (local_index * pt->item_size));
 }
 
 
