@@ -45,6 +45,7 @@ typedef struct mem_hash_t {
 } mem_hash;
 
 
+mem_hash* mem_hash_new();
 u32 mem_hash_hash(u32 k);
 u32 mem_hash_probe(u32 h, u32 i);
 void mem_hash_resize(mem_hash *t);
@@ -55,7 +56,7 @@ u32 mem_hash_get(const mem_hash *t, u32 k);
 inline u32 mem_hash_hash(u32 k) {
   k = ((k >> 16) ^ k) * 0x45d9f3b;
   k = ((k >> 16) ^ k) * 0x45d9f3b;
-  k =  (k >> 16) ^ k;
+  k = ((k >> 16) ^ k);
   return k;
 }
 
@@ -117,6 +118,11 @@ u32 mem_hash_get(const mem_hash *t, u32 k) {
     entry = &t->entries[mem_hash_probe(h, i++) % t->capacity];
   } while (entry->k != 0 && entry->k != k);
   return entry->v;
+}
+
+mem_hash* mem_hash_new() {
+  mem_hash*m = (mem_hash*)calloc(1, sizeof(mem_hash));
+  return m;
 }
 
 
