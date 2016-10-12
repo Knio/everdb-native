@@ -126,6 +126,13 @@ mem_hash* mem_hash_new() {
 }
 
 
+void mem_hash_free(mem_hash* t) {
+  free(t->entries);
+  free(t);
+}
+
+
+
 typedef struct txn_state_t {
   u32 nblocks;
   mem_hash freed;

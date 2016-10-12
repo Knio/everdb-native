@@ -31,6 +31,8 @@ TEST_CASE("txn") {
         }
     }
 
+    mem_hash_free(m);
+
 }
 
 
