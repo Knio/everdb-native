@@ -28,7 +28,7 @@ u32 page_get_host_index(const edb* db, const u32 root, const u32 index) {
     return root;
   }
 
-  if (index <= LEVEL_ONE) {
+  if (index < LEVEL_ONE) {
     // level 1 large block
     return pt->data_blocks[index];
   }
