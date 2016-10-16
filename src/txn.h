@@ -46,21 +46,21 @@ typedef struct mem_hash_t {
 
 
 mem_hash* mem_hash_new();
-u32 mem_hash_hash(u32 k);
-u32 mem_hash_probe(u32 h, u32 i);
+static inline u32 mem_hash_hash(u32 k);
+static inline u32 mem_hash_probe(u32 h, u32 i);
 void mem_hash_resize(mem_hash *t);
 void mem_hash_put(mem_hash *t, u32 k, u32 v);
-u32 mem_hash_get(const mem_hash *t, u32 k);
+static inline u32 mem_hash_get(const mem_hash *t, u32 k);
 
 
-inline u32 mem_hash_hash(u32 k) {
+static inline u32 mem_hash_hash(u32 k) {
   k = ((k >> 16) ^ k) * 0x45d9f3b;
   k = ((k >> 16) ^ k) * 0x45d9f3b;
   k = ((k >> 16) ^ k);
   return k;
 }
 
-inline u32 mem_hash_probe(u32 h, u32 i) {
+static inline u32 mem_hash_probe(u32 h, u32 i) {
   return h + (i * i + i) / 2;
 }
 
@@ -110,7 +110,7 @@ void mem_hash_put(mem_hash *t, u32 k, u32 v) {
   entry->v = v;
 }
 
-u32 mem_hash_get(const mem_hash *t, u32 k) {
+static inline u32 mem_hash_get(const mem_hash *t, u32 k) {
   u32 h = mem_hash_hash(k);
   u32 i = 0;
   mem_hash_item* entry;

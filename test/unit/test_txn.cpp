@@ -12,7 +12,7 @@ TEST_CASE("txn") {
     REQUIRE(mem_hash_get(m, 1) == 2);
     REQUIRE(mem_hash_get(m, 2) == 0);
 
-    size_t N = 1000000;
+    size_t N = 100000;
     for (uint32_t i=1; i<N; i++) {
         if (i & 1) {
             mem_hash_put(m, i, ~i);
