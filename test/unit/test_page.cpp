@@ -30,7 +30,7 @@ TEST_CASE("page") {
   edb *db = new edb;
 
   // fake allocate db and 1024 unused pages
-  db->data = (char*) malloc(BLOCK_SIZE * 1024);
+  db->data = (u8*) malloc(BLOCK_SIZE * 1024);
   for (u32 i=1; i<1024; i++) {
     freelist.push_back(i);
   }

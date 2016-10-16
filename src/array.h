@@ -45,6 +45,8 @@ int array_set(edb* db, const u32 root, const u32 index, const void *data);
 int array_push(edb* db, const u32 root, const void *data);
 int array_pop(edb* db, const u32 root, void* data);
 
+#define ERR_ARRAY_INDEX_OUT_OF_BOUNDS (3001)
+
 
 #ifdef __cplusplus
 }

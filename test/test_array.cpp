@@ -26,7 +26,7 @@ TEST_CASE("array") {
   u64 x = 42, y = 43;
   array_init(db, 0, sizeof(u64));
 
-  char* pt = BLOCK(db, 0);
+  u8* pt = BLOCK(db, 0);
   const array_header *ah = (array_header*)
       (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
   REQUIRE(ah->item_size == 8);
@@ -35,9 +35,9 @@ TEST_CASE("array") {
   REQUIRE(array_length(db, 0) == 0);
   REQUIRE(array_capacity(db, 0) == 0);
   // get & set fail
-  REQUIRE(array_get(db, 0, 0, &x) == 1);
+  REQUIRE(array_get(db, 0, 0, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
   REQUIRE(x == 42);
-  REQUIRE(array_set(db, 0, 0, &x) == 1);
+  REQUIRE(array_set(db, 0, 0, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
   REQUIRE(x == 42);
 
   SECTION("resize") {
@@ -60,9 +60,9 @@ TEST_CASE("array") {
     REQUIRE(y == 42);
 
     // get and set element 1 fail
-    REQUIRE(array_set(db, 0, 1, &x) == 1);
+    REQUIRE(array_set(db, 0, 1, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
     REQUIRE(x == 42);
-    REQUIRE(array_get(db, 0, 1, &x) == 1);
+    REQUIRE(array_get(db, 0, 1, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
     REQUIRE(x == 42);
 
     // close and open db

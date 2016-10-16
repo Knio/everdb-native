@@ -158,7 +158,7 @@ int array_get(const edb* db, const u32 root, const u32 index, void* data) {
 
   void* element = array_data(db, root, index);
   if (element == NULL) {
-    return 1;
+    return ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
   }
 
   memcpy(
@@ -175,7 +175,7 @@ int array_set(edb* db, const u32 root, const u32 index, const void* data) {
 
   void* element = array_data(db, root, index);
   if (element == NULL) {
-    return 1;
+    return ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
   }
 
   memcpy(

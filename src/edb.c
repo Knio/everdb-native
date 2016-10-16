@@ -222,7 +222,7 @@ int edb_resize(edb *db, u32 nblocks) {
     db->h_file,
     0
   );
-  if(db->data == (char*) MAP_FAILED) {
+  if(db->data == (u8*) MAP_FAILED) {
     db->data = NULL;
     err = -9;
     goto err;

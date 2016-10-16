@@ -39,12 +39,13 @@ TEST_CASE("integration") {
   REQUIRE(q == 100);
 
   // array underrun
-  REQUIRE(array_pop(db, ar, &q) == 1);
+  REQUIRE(array_pop(db, ar, &q) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
 
   const long N = 1000000;
 
   for (long i=0; i<N; i++) {
     REQUIRE(array_push(db, ar, &i) == 0);
+    REQUIRE(array_length(db, ar) == i + 1);
   }
 
   for (long i=0; i<N; i++) {
@@ -55,6 +56,7 @@ TEST_CASE("integration") {
   for (long i=N-1; i>=0; i--) {
     REQUIRE(array_pop(db, ar, &q) == 0);
     REQUIRE(q == i);
+    REQUIRE(array_length(db, ar) == i);
   }
 
 }
