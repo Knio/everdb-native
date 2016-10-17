@@ -93,6 +93,7 @@ int array_resize(edb* db, const u32 root, const u32 length) {
       memset(pt->data, 0, small_capacity * pt->item_size);
     }
 
+    // if this is the freelist, push/pop can happen here
     if ((err = page_resize(db, root, nblocks))) {
       goto err;
     }

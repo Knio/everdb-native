@@ -44,12 +44,16 @@ TEST_CASE("page") {
   REQUIRE(page_resize(db, 0, 1) == 0);
   REQUIRE(*nblocks == 1);
   REQUIRE(level1[0] == 1023);
+  REQUIRE(page_get_host_index(db, 0, 0) == 1023);
+  REQUIRE(page_get_host_index(db, 0, 1) == 0);
   REQUIRE(level1[1] == 0);
   REQUIRE(level1[2] == 0);
   REQUIRE(freelist.back() == 1022);
 
   // shrink from 1 to 0 pages
   REQUIRE(page_resize(db, 0, 0) == 0);
+  REQUIRE(page_get_host_index(db, 0, 0) == 0);
+  REQUIRE(page_get_host_index(db, 0, 1) == 0);
   REQUIRE(*nblocks == 0);
   REQUIRE(level1[0] == 0);
   REQUIRE(level1[1] == 0);
@@ -58,6 +62,12 @@ TEST_CASE("page") {
   // grow from 0 to 512 pages (the limit of single-level page tables)
   REQUIRE(page_resize(db, 0, 512) == 0);
   REQUIRE(*nblocks == 512);
+  REQUIRE(page_get_host_index(db, 0, 0) == 1023);
+  REQUIRE(page_get_host_index(db, 0, 1) == 1022);
+  REQUIRE(page_get_host_index(db, 0, 510) == 513);
+  REQUIRE(page_get_host_index(db, 0, 511) == 512);
+  REQUIRE(page_get_host_index(db, 0, 512) == 0);
+  REQUIRE(page_get_host_index(db, 0, 513) == 0);
   REQUIRE(level1[0] == 1023);
   REQUIRE(level1[1] == 1022);
   REQUIRE(level1[510] == 513);
@@ -73,6 +83,8 @@ TEST_CASE("page") {
   REQUIRE(level2[0] == 511);
   u32* index_page = (u32*) (db->data + BLOCK_SIZE * level2[0]);
 
+  REQUIRE(page_get_host_index(db, 0, 512) == 510);
+  REQUIRE(page_get_host_index(db, 0, 513) == 0);
   REQUIRE(index_page[0] == 510);
   REQUIRE(index_page[1] == 0);
   REQUIRE(index_page[2] == 0);

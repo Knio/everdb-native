@@ -19,7 +19,7 @@ typedef struct index_page_t {
 // returns 0 on error
 u32 page_get_host_index(const edb* db, const u32 root, const u32 index) {
   page_table* pt = PAGE_TABLE(db, root);
-  if (index > pt->nblocks) {
+  if (index >= pt->nblocks) {
     return 0;
   }
 
