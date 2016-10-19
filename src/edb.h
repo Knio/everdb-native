@@ -2,6 +2,7 @@
 #define EDB_H
 
 #include "core.h"
+#include "txn.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,26 +10,13 @@ extern "C" {
 
 #define EDB_ERROR_FILE_OPEN (1001)
 #define EDB_ERROR_FILE_SIZE (1002)
+#define ERR_EDB_DB_SIZE_MAX (1003)
 
-typedef struct edb_root_t {
-  u32 txn_id;
-  u32 committed;
-  u32 freelist;
-} edb_root;
-
-
-int
-edb_open(edb *db, const char* f_name,
-    int readonly,
-    int overwrite);
-
-void
-edb_close(edb *db);
-
-int
-edb_resize(edb *db, u32 nblocks);
-
-
+u32 edb_allocate_block(edb *db);
+int edb_free_block(edb *db, const u32 block);
+int edb_open(edb *db, const char* f_name, int readonly, int overwrite);
+void edb_close(edb *db);
+int edb_resize(edb *db, u32 nblocks);
 
 #ifdef __cplusplus
 }

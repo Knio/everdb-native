@@ -16,8 +16,6 @@ extern "C" {
 #define INDEX0(index) ((index - LEVEL_ONE) >> INDEX_BITS)
 #define INDEX1(index) ((index - LEVEL_ONE) & INDEX_MASK)
 
-#define BLOCK(db, index) (db->data + (index * BLOCK_SIZE))
-
 
 typedef struct page_t {
   u8 data[BLOCK_SIZE];

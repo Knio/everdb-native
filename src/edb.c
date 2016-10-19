@@ -1,6 +1,7 @@
 #include "edb.h"
 #include "math.h"
 #include "array.h"
+#include "txn.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -151,6 +152,9 @@ void edb_map_close(edb *const db) {
 
 int edb_resize(edb *const db, u32 nblocks) {
   int err = 0;
+  if (nblocks >= 0xffff00) {
+    return ERR_EDB_DB_SIZE_MAX;
+  }
   u64 filesize = nblocks << BLOCK_BITS;
   long size_hi = 0;
 
@@ -275,27 +279,4 @@ int edb_allocate_block(edb *const db, u32 *const new_block) {
 int edb_free_block(edb *db, u32 page) {
   return array_push(db, db->freelist, &page);
 }
-
-/*
-int edb_check(const edb *db) {
-  return 0;
-}
-
-int edb_init(edb *db) {
-  return 0;
-}
-
-char* edb_get(const edb *db,
-    const char* key, uint32_t nkey) {
-
-  return NULL;
-}
-
-int edb_put(edb *db,
-    const char* key, uint32_t nkey,
-    const char* value, uint32_t nvalue) {
-
-  return 0;
-}
-*/
 
