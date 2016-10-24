@@ -21,9 +21,10 @@ TEST_CASE("integration") {
   REQUIRE(db->nblocks == 1);
 
   db->freelist = 0;
-  REQUIRE(array_init(db, 0, sizeof(u32)) == 0);
+  REQUIRE(array_init(db, db->freelist, sizeof(u32)) == 0);
 
-  u32 ar = edb_allocate_block(db);
+  u32 ar;
+  REQUIRE(edb_allocate_block(db, &ar) == 0);
   REQUIRE(ar != 0);
   REQUIRE(array_init(db, ar, sizeof(long)) == 0);
 
@@ -59,4 +60,9 @@ TEST_CASE("integration") {
     REQUIRE(array_length(db, ar) == i);
   }
 
+  REQUIRE(array_resize(db, ar, 0) == 0);
+  REQUIRE(array_length(db, ar) == 0);
+  REQUIRE(array_capacity(db, ar) == 510);
+
+  edb_close(db);
 }

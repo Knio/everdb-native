@@ -11,7 +11,6 @@ extern "C" {
 typedef struct array_header_t {
     u8 item_size;
     u32 length;
-    u32 capacity;
 } array_header;
 
 #ifdef _MSC_VER
@@ -38,7 +37,6 @@ int array_resize(edb* db, const u32 root, const u32 length);
 u32 array_length(const edb* db, const u32 root);
 u32 array_capacity(const edb* db, const u32 root);
 
-void* array_data(const edb* db, const u32 root, const u32 index);
 int array_get(const edb* db, const u32 root, const u32 index, void* data);
 int array_set(edb* db, const u32 root, const u32 index, const void *data);
 

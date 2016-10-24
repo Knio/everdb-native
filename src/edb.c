@@ -17,12 +17,12 @@
 
 
 void
-edb_map_close(edb *db);
+edb_map_close(edb *const db);
 int
-edb_init(edb *db);
+edb_init(edb *const db);
 
 
-int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
+int edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
   int err = 0;
   u32 nblocks = 0;
   int is_new = 0;
@@ -113,7 +113,7 @@ int edb_open(edb *db, const char* fname, int readonly, int overwrite) {
   return err;
 }
 
-void edb_close(edb *db) {
+void edb_close(edb *const db) {
   if (db == NULL) { return; }
   edb_map_close(db);
 
@@ -130,7 +130,7 @@ void edb_close(edb *db) {
   #endif
 }
 
-void edb_map_close(edb *db) {
+void edb_map_close(edb *const db) {
   #ifdef _WIN32
   if (db->data) {
     UnmapViewOfFile(db->data);
@@ -149,7 +149,7 @@ void edb_map_close(edb *db) {
   #endif
 }
 
-int edb_resize(edb *db, u32 nblocks) {
+int edb_resize(edb *const db, u32 nblocks) {
   int err = 0;
   u64 filesize = nblocks << BLOCK_BITS;
   long size_hi = 0;
@@ -242,33 +242,34 @@ int edb_resize(edb *db, u32 nblocks) {
 }
 
 
-u32 edb_allocate_block(edb *db) {
+int edb_allocate_block(edb *const db, u32 *const new_block) {
   int err = 0;
-  u32 len = array_length(db, db->freelist);
+  u32 length = array_length(db, db->freelist);
 
-  if (len > 0) {
-    u32 page;
-    if ((err = array_pop(db, db->freelist, &page))) {
-      // setlasterror?
-      return 0;
+  if (length > 0) {
+    if ((err = array_pop(db, db->freelist, new_block))) {
+      goto err;
     }
-    return page;
+    return 0;
   }
 
-  else {
-    u32 nblocks = db->nblocks;
-    u32 step = next_power_of_two(nblocks >> 3);
+  u32 nblocks = db->nblocks;
+  u32 step = next_power_of_two(nblocks >> 3);
 
-    // NOTE: after resizing, db->data has changed and all local pointers
-    // need to be updated!
-    edb_resize(db, (nblocks + step) & ~(step-1));
-
-    for(u32 i = nblocks + 1; i < db->nblocks; i++) {
-      array_push(db, db->freelist, &i);
-    }
-    return nblocks;
+  // NOTE: after resizing, db->data has changed and all local pointers
+  // need to be updated!
+  if ((err = edb_resize(db, (nblocks + step) & ~(step-1)))) {
+    goto err;
   }
 
+  for (u32 i = nblocks + 1; i < db->nblocks; i++) {
+    array_push(db, db->freelist, &i);
+  }
+  *new_block = nblocks;
+  return 0;
+
+  err:
+  return err;
 }
 
 int edb_free_block(edb *db, u32 page) {

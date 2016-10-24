@@ -38,8 +38,8 @@ typedef struct {
 } edb;
 
 
-u32 edb_allocate_block(edb *db);
-int edb_free_block(edb *db, const u32 block);
+int edb_allocate_block(edb* db, u32 *new_block);
+int edb_free_block(edb* db, const u32 block);
 
 #ifdef __cplusplus
 }

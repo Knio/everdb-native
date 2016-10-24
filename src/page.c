@@ -58,9 +58,8 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
 
   while (pt->nblocks < nblocks && pt->nblocks < LEVEL_ONE) {
     // grow data_blocks
-    u32 new_block = edb_allocate_block(db);
-    if (new_block == 0) {
-      err = -1;
+    u32 new_block;
+    if ((err = edb_allocate_block(db, &new_block))) {
       goto err;
     }
     pt = PAGE_TABLE(db, root);
@@ -75,18 +74,15 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
 
     if (index_block == 0) {
       // allocate new index_block
-      index_block = edb_allocate_block(db);
-      if (index_block == 0) {
-        err = -1;
+      if ((err = edb_allocate_block(db, &index_block))) {
         goto err;
       }
       pt = PAGE_TABLE(db, root);
       pt->index_blocks[index_index] = index_block;
     }
 
-    u32 new_block = edb_allocate_block(db);
-    if (new_block == 0) {
-      err = -1;
+    u32 new_block;
+    if ((err = edb_allocate_block(db, &new_block))) {
       goto err;
     }
     pt = PAGE_TABLE(db, root);

@@ -8,13 +8,14 @@
 std::vector<u32> freelist;
 extern "C" {
 
-u32 edb_allocate_block(edb* db) {
+int edb_allocate_block(edb *const db, u32 *const new_block) {
   if (freelist.size()) {
-    u32 block = freelist.back();
+    u32 back = freelist.back();
     freelist.pop_back();
-    return block;
+    *new_block = back;
+    return 0;
   }
-  return 0;
+  return -1;
 }
 
 int edb_free_block(edb* db, const u32 block) {

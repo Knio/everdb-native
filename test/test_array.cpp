@@ -12,7 +12,7 @@
 
 
 TEST_CASE("array") {
-  REQUIRE(sizeof(array_header) == 12);
+  REQUIRE(sizeof(array_header) == 8);
 
   edb *db = new edb;
 
@@ -24,45 +24,43 @@ TEST_CASE("array") {
   REQUIRE(db->nblocks == 2);
 
   u64 x = 42, y = 43;
+
+  u32 small_capacity = (
+    (BLOCK_SIZE - sizeof(page_header) - sizeof(array_header)) / sizeof(u64)
+  );
+
   array_init(db, 0, sizeof(u64));
 
   u8* pt = BLOCK(db, 0);
-  const array_header *ah = (array_header*)
+  array_header *ah = (array_header*)
       (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
   REQUIRE(ah->item_size == 8);
 
   // array is length 0
   REQUIRE(array_length(db, 0) == 0);
-  REQUIRE(array_capacity(db, 0) == 0);
+  REQUIRE(array_capacity(db, 0) == small_capacity);
   // get & set fail
   REQUIRE(array_get(db, 0, 0, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
   REQUIRE(x == 42);
   REQUIRE(array_set(db, 0, 0, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
   REQUIRE(x == 42);
 
+  // pop fails
+  REQUIRE(array_pop(db, 0, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
+
   SECTION("resize") {
 
     // resize to 1
     REQUIRE(array_resize(db, 0, 1) == 0);
 
-    REQUIRE(array_length(db, 0) == 1);
-    REQUIRE(array_capacity(db, 0) == (
-      (BLOCK_SIZE - sizeof(page_header) - sizeof(array_header)) / sizeof(u64)
-    ));
-
-    // get and set element 0 work
-    REQUIRE(array_get(db, 0, 0, &x) == 0);
-    REQUIRE(x == 0);
+    REQUIRE(array_length(db, 0) == 0);
+    REQUIRE(array_capacity(db, 0) == small_capacity);
 
     x = 42;
-    REQUIRE(array_set(db, 0, 0, &x) == 0);
-    REQUIRE(array_get(db, 0, 0, &y) == 0);
-    REQUIRE(y == 42);
-
-    // get and set element 1 fail
-    REQUIRE(array_set(db, 0, 1, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
+    // get & set [0] fail
+    REQUIRE(array_get(db, 0, 0, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
     REQUIRE(x == 42);
-    REQUIRE(array_get(db, 0, 1, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
+    REQUIRE(array_set(db, 0, 0, &x) == ERR_ARRAY_INDEX_OUT_OF_BOUNDS);
     REQUIRE(x == 42);
 
     // close and open db
@@ -75,9 +73,8 @@ TEST_CASE("array") {
       (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
 
     REQUIRE(ah->item_size == 8);
-    REQUIRE(array_length(db, 0) == 1);
-    REQUIRE(array_get(db, 0, 0, &y) == 0);
-    REQUIRE(y == 42);
+    REQUIRE(array_length(db, 0) == 0);
+    REQUIRE(array_capacity(db, 0) == small_capacity);
   }
 
   SECTION("push/pop") {
@@ -90,6 +87,26 @@ TEST_CASE("array") {
     REQUIRE(array_length(db, 0) == 0);
     REQUIRE(y == 12);
   }
+
+  SECTION("resize 2") {
+    REQUIRE(array_resize(db, 0, 0) == 0);
+    REQUIRE(array_length(db, 0) == 0);
+    REQUIRE(array_capacity(db, 0) == small_capacity);
+
+    REQUIRE(array_resize(db, 0, small_capacity) == 0);
+    REQUIRE(array_length(db, 0) == 0);
+    REQUIRE(array_capacity(db, 0) == small_capacity);
+
+    REQUIRE(array_resize(db, 0, small_capacity + 1) == 0);
+    REQUIRE(array_length(db, 0) == 0);
+    REQUIRE(array_capacity(db, 0) == BLOCK_SIZE / sizeof(u64));
+    // ah->length = (BLOCK_SIZE / sizeof(u64));
+
+    // REQUIRE(array_resize(db, 0, small_capacity) == 0);
+    // REQUIRE(array_length(db, 0) == small_capacity);
+    // REQUIRE(array_capacity(db, 0) == small_capacity);
+  }
+
 
   edb_close(db);
 
