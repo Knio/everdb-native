@@ -22,6 +22,8 @@ edb_map_close(edb *const db);
 int
 edb_init(edb *const db);
 
+int
+edb_resize(edb *db, u32 nblocks);
 
 int edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
   int err = 0;

@@ -32,9 +32,14 @@ int txn_begin(edb *db) {
 
 
 int txn_allocate_block(edb* db, u32 *new_block) {
-    *new_block = edb_allocate_block(db);
+    int err = 0;
+    if ((err = edb_allocate_block(db, new_block))) {
+        goto err;
+    }
     mem_hash_set(db->txn->blocks, *new_block, ALLOCATED);
-    return 0;
+
+    err:
+    return err;
 }
 
 
@@ -87,7 +92,9 @@ int txn_modify_block(edb *db, u32 block, u32* new_block) {
         return 0;
     }
     // copy on write allocation
-    *new_block = edb_allocate_block(db);
+    if ((err = edb_allocate_block(db, new_block))) {
+        goto err;
+    }
     memcpy(BLOCK(db, *new_block), BLOCK(db, block), BLOCK_SIZE);
     mem_hash_set(db->txn->blocks, *new_block, block);
 
