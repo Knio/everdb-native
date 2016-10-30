@@ -102,6 +102,9 @@ int txn_modify_block(edb *db, u32 block, u32* new_block) {
     return err;
 }
 
+int txn_commit_master(edb *db) {
+    return 0;
+}
 
 int txn_commit(edb *db) {
     int err = 0;
