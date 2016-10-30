@@ -26,6 +26,7 @@ int txn_begin(edb *db) {
     txn_state* ts = (txn_state*) calloc(1, sizeof(txn_state));
     ts->blocks = mem_hash_new();
     ts->next = db->txn;
+    db->txn = ts;
     ts->nblocks = db->nblocks;
     return 0;
 }
