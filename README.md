@@ -14,7 +14,6 @@ everdb-native
 TODO
 ----
 
- - [ ] Fix build
  - [ ] Setup coverage
  - [ ] Implement transactions API
  - [ ] Test transactions API
