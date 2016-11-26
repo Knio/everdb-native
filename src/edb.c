@@ -1,9 +1,3 @@
-#include "edb.h"
-#include "io.h"
-#include "math.h"
-#include "array.h"
-#include "txn.h"
-
 #ifdef _WIN32
 #include <windows.h>
 #elif __linux__
@@ -17,19 +11,52 @@
 #error Unsupported OS
 #endif
 
+#include "edb.h"
+#include "io.h"
+#include "math.h"
+#include "array.h"
+#include "txn.h"
+
+#define FREELIST (1)
+#define OBJLIST (2)
+
 
 int
 edb_init(edb *const db);
 
 int
 edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
+  /*
+  open everdb database file `fname`
+
+  bool readonly   open db as read-only; all write ops will fail
+                  db file must exist
+
+  bool overwrite  create a new, empty database, even if fname already exists
+                  existing db will be destroyed
+                  readonly must be false
+  */
+
   int err = 0;
-  if ((err = io_open(db, fname, readonly, overwrite))) {
-    goto err;
+  CHECK(io_open(db, fname, readonly, overwrite));
+
+  int is_new = 0;
+  if (overwrite || (readonly = 0 && db->nblocks == 1)) {
+    is_new = 1;
   }
 
+  if (is_new) {
+    CHECK(edb_init(db));
+  }
+
+  else {
+    CHECK(edb_check(db));
+  }
+
+  return 0;
 
   err:
+  io_close(db);
   return err;
 }
 
@@ -40,14 +67,32 @@ edb_close(edb *const db) {
 }
 
 
+int edb_init(edb *db) {
+  int err = 0;
+  CHECK(io_resize(db, 3));
+
+  CHECK(array_init(db, FREELIST, sizeof(u32)));
+  CHECK(array_init(db, OBJLIST,  sizeof(u32)));
+
+  db->freelist = FREELIST;
+  db->objlist = OBJLIST;
+
+  err:
+  return err;
+}
+
+
+int edb_check(edb *db) {
+
+}
+
+
 int edb_allocate_block(edb *const db, u32 *const new_block) {
   int err = 0;
   u32 length = array_length(db, db->freelist);
 
   if (length > 0) {
-    if ((err = array_pop(db, db->freelist, new_block))) {
-      goto err;
-    }
+    CHECK(array_pop(db, db->freelist, new_block));
     return 0;
   }
 
@@ -56,9 +101,8 @@ int edb_allocate_block(edb *const db, u32 *const new_block) {
 
   // NOTE: after resizing, db->data has changed and all local pointers
   // need to be updated!
-  if ((err = io_resize(db, (nblocks + step) & ~(step-1)))) {
-    goto err;
-  }
+
+  CHECK(io_resize(db, (nblocks + step) & ~(step-1)));
 
   for (u32 i = nblocks + 1; i < db->nblocks; i++) {
     array_push(db, db->freelist, &i);

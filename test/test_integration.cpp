@@ -16,10 +16,10 @@ TEST_CASE("integration") {
 
   // open new db + overwrite
   REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
-  REQUIRE(db->nblocks == 1);
+  REQUIRE(db->nblocks == 3);
 
-  db->freelist = 0;
-  REQUIRE(array_init(db, db->freelist, sizeof(u32)) == 0);
+  REQUIRE(db->freelist == 1);
+
 
   u32 ar;
   REQUIRE(edb_allocate_block(db, &ar) == 0);

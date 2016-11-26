@@ -59,9 +59,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
   while (pt->nblocks < nblocks && pt->nblocks < LEVEL_ONE) {
     // grow data_blocks
     u32 new_block;
-    if ((err = edb_allocate_block(db, &new_block))) {
-      goto err;
-    }
+    CHECK(edb_allocate_block(db, &new_block))
     pt = PAGE_TABLE(db, root);
     pt->data_blocks[pt->nblocks++] = new_block;
   }
@@ -74,17 +72,13 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
 
     if (index_block == 0) {
       // allocate new index_block
-      if ((err = edb_allocate_block(db, &index_block))) {
-        goto err;
-      }
+      CHECK(edb_allocate_block(db, &index_block))
       pt = PAGE_TABLE(db, root);
       pt->index_blocks[index_index] = index_block;
     }
 
     u32 new_block;
-    if ((err = edb_allocate_block(db, &new_block))) {
-      goto err;
-    }
+    CHECK(edb_allocate_block(db, &new_block))
     pt = PAGE_TABLE(db, root);
     ip = INDEX_PAGE(db, index_block);
     ip->data_blocks[data_index] = new_block;
@@ -99,18 +93,14 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
     ip = INDEX_PAGE(db, index_block);
     u32 data_block = ip->data_blocks[data_index];
 
-    if ((err = edb_free_block(db, data_block))) {
-      goto err;
-    }
+    CHECK(edb_free_block(db, data_block))
     pt = PAGE_TABLE(db, root);
     ip = INDEX_PAGE(db, index_block);
 
     ip->data_blocks[data_index] = 0;
     if (INDEX1(pt->nblocks - 1) == 0) {
       // free index page
-      if ((err = edb_free_block(db, index_block))) {
-        goto err;
-      }
+      CHECK(edb_free_block(db, index_block))
       pt = PAGE_TABLE(db, root);
       ip = INDEX_PAGE(db, index_block);
       pt->index_blocks[index_index] = 0;
@@ -121,9 +111,7 @@ int page_resize(edb* db, const u32 root, const u32 nblocks) {
   while (pt->nblocks > nblocks) {
     // shrink
     u32 data_block = pt->data_blocks[pt->nblocks - 1];
-    if ((err = edb_free_block(db, data_block))) {
-      goto err;
-    }
+    CHECK(edb_free_block(db, data_block))
     pt = PAGE_TABLE(db, root);
     pt->data_blocks[--pt->nblocks] = 0;
   }

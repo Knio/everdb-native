@@ -19,7 +19,7 @@ TEST_CASE("array") {
 
   // open new db + overwrite
   REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
-  REQUIRE(db->nblocks == 1);
+  REQUIRE(db->nblocks == 3);
 
   REQUIRE(io_resize(db, 2) == 0);
   REQUIRE(db->nblocks == 2);

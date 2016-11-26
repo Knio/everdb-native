@@ -194,16 +194,13 @@ int array_push(edb* const db, const u32 root, const void *data) {
   const u32 capacity = array_capacity(db, root);
 
   if (pt->length + 1 > capacity) {
-    if ((err = array_resize(db, root, pt->length + 1))) {
-      goto err;
-    }
+    CHECK(array_resize(db, root, pt->length + 1))
     pt = PAGE_TABLE_ARRAY(db, root);
   }
 
   pt->length++;
-  if ((err = array_set(db, root, pt->length - 1, data))) {
-    goto err;
-  }
+  CHECK(array_set(db, root, pt->length - 1, data))
+
   err:
   return err;
 }
@@ -213,9 +210,7 @@ int array_pop(edb* const db, const u32 root, void* data) {
   int err = 0;
   page_table_array* const pt = PAGE_TABLE_ARRAY(db, root);
 
-  if ((err = array_get(db, root, pt->length - 1, data))) {
-    goto err;
-  }
+  CHECK(array_get(db, root, pt->length - 1, data))
   pt->length--;
 
   // TODO shrink
