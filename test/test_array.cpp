@@ -1,5 +1,6 @@
 #include "../lib/catch.hpp"
 
+#include "../src/io.h"
 #include "../src/edb.h"
 #include "../src/array.h"
 
@@ -20,7 +21,7 @@ TEST_CASE("array") {
   REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
   REQUIRE(db->nblocks == 1);
 
-  REQUIRE(edb_resize(db, 2) == 0);
+  REQUIRE(io_resize(db, 2) == 0);
   REQUIRE(db->nblocks == 2);
 
   u64 x = 42, y = 43;

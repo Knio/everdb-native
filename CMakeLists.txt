@@ -13,11 +13,13 @@ SET(CMAKE_LINKER_FLAGS_DEBUG "--coverage")
 
 add_library(
     everdb
-    src/array.c
-    src/edb.c
-    src/hash.c
+    src/io.c
     src/page.c
-    src/txn.c)
+    src/array.c
+    src/hash.c
+    src/txn.c
+    src/edb.c
+)
 
 enable_testing()
 add_subdirectory(test)

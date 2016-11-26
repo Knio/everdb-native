@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+#define ERR_EDB_DB_SIZE_MAX (1003)
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;

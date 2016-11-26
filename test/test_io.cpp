@@ -1,6 +1,6 @@
 #include "../lib/catch.hpp"
 
-#include "../src/edb.h"
+#include "../src/io.h"
 
 #ifdef __linux__
 #include <string.h> //memcpy
@@ -35,7 +35,7 @@ TEST_CASE("open") {
   edb *db = new edb;
 
   // open new db + overwrite
-  REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
+  REQUIRE(io_open(db, "test.db", 0, 1) == 0);
   REQUIRE(db->filesize == 4096);
 
   SECTION("data") {
@@ -45,10 +45,10 @@ TEST_CASE("open") {
 
     SECTION("save has same data") {
       // save it
-      edb_close(db);
+      io_close(db);
 
       // open it again and see if data still there
-      REQUIRE(edb_open(db, "test.db", 0, 0) == 0);
+      REQUIRE(io_open(db, "test.db", 0, 0) == 0);
       REQUIRE(db->filesize == 4096);
       REQUIRE(memcmp(db->data, "test 123", 8) == 0);
     }
@@ -56,19 +56,19 @@ TEST_CASE("open") {
   }
 
   SECTION("resize") {
-      REQUIRE(edb_resize(db, 1) == 0);
+      REQUIRE(io_resize(db, 1) == 0);
       REQUIRE(db->nblocks == 1);
       REQUIRE(file_size(db) == BLOCK_SIZE);
 
-      REQUIRE(edb_resize(db, 4) == 0);
+      REQUIRE(io_resize(db, 4) == 0);
       REQUIRE(db->nblocks == 4);
       REQUIRE(file_size(db) == BLOCK_SIZE * 4);
 
-      REQUIRE(edb_resize(db, 1) == 0);
+      REQUIRE(io_resize(db, 1) == 0);
       REQUIRE(db->nblocks == 1);
       REQUIRE(file_size(db) == BLOCK_SIZE);
   }
 
-  edb_close(db);
+  io_close(db);
 
 }

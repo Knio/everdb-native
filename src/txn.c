@@ -9,6 +9,7 @@
 #endif
 
 #include "txn.h"
+#include "io.h"
 #include "mem_hash.h"
 
 #define ALLOCATED (0xffff01)
@@ -195,7 +196,7 @@ int txn_abort(edb *db) {
     txn_state* ts = db->txn;
     db->txn = ts->next;
 
-    if (err = edb_resize(db, ts->nblocks)) {
+    if (err = io_resize(db, ts->nblocks)) {
         goto err;
     }
 
