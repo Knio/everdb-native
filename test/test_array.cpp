@@ -32,7 +32,7 @@ TEST_CASE("array") {
 
   array_init(db, 0, sizeof(u64));
 
-  u8* pt = BLOCK(db, 0);
+  u8* pt = db->data;
   array_header *ah = (array_header*)
       (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
   REQUIRE(ah->item_size == 8);
@@ -69,7 +69,7 @@ TEST_CASE("array") {
     REQUIRE(edb_open(db, "test.db", 0, 0) == 0);
     REQUIRE(db->nblocks == 2);
 
-    pt = BLOCK(db, 0);
+    pt = db->data;
     ah = (array_header*)
       (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
 

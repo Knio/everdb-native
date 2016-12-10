@@ -12,6 +12,7 @@
 #endif
 
 #include "io.h"
+#include "util.h"
 
 int io_open(edb *const db, const char *const fname, int readonly, int overwrite) {
   int err = 0;
@@ -102,6 +103,26 @@ int io_open(edb *const db, const char *const fname, int readonly, int overwrite)
     memset(db, 0, sizeof(edb));
   }
   return err;
+}
+
+
+void io_map_close(edb *const db) {
+  #ifdef _WIN32
+  if (db->data) {
+    UnmapViewOfFile(db->data);
+    db->data = NULL;
+  }
+  if (db->h_mapping) {
+    CloseHandle(db->h_mapping);
+    db->h_mapping = NULL;
+  }
+
+  #elif __linux__
+  if(db->data) {
+    munmap(db->data, db->filesize);
+    db->data = NULL;
+  }
+  #endif
 }
 
 
@@ -217,24 +238,3 @@ int io_resize(edb *const db, u32 nblocks) {
   db->nblocks = 0;
   return err;
 }
-
-
-void io_map_close(edb *const db) {
-  #ifdef _WIN32
-  if (db->data) {
-    UnmapViewOfFile(db->data);
-    db->data = NULL;
-  }
-  if (db->h_mapping) {
-    CloseHandle(db->h_mapping);
-    db->h_mapping = NULL;
-  }
-
-  #elif __linux__
-  if(db->data) {
-    munmap(db->data, db->filesize);
-    db->data = NULL;
-  }
-  #endif
-}
-

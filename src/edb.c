@@ -12,6 +12,7 @@
 #endif
 
 #include "edb.h"
+#include "util.h"
 #include "io.h"
 #include "math.h"
 #include "array.h"
@@ -23,6 +24,11 @@
 
 int
 edb_init(edb *const db);
+
+int
+edb_check(edb *const db);
+
+
 
 int
 edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
@@ -83,7 +89,7 @@ int edb_init(edb *db) {
 
 
 int edb_check(edb *db) {
-
+  return 0;
 }
 
 

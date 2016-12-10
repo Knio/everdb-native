@@ -22,12 +22,6 @@ typedef uint64_t u64;
 #define BLOCK_SIZE (1 << BLOCK_BITS)
 #define BLOCK_MASK (BLOCK_SIZE - 1)
 
-#define BLOCK(db, index) ((db)->data + ((index) * BLOCK_SIZE))
-
-#define CHECK(exp) if ((err = (exp))) { goto err; }
-
-// struct txn_state_t;
-// typedef txn_state_t txn_state;
 typedef struct txn_state_t txn_state;
 
 typedef struct edb_t {

@@ -1,9 +1,11 @@
-#include "array.h"
-
 #ifdef __linux
 #include <stdlib.h> // malloc
 #include <string.h> // memset, memcpy
 #endif
+
+#include "array.h"
+#include "util.h"
+
 
 #define PAGE_TABLE_ARRAY(db, page) ((page_table_array*) (db->data + BLOCK_SIZE * page))
 
