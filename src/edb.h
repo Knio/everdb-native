@@ -2,7 +2,6 @@
 #define EDB_H
 
 #include "core.h"
-#include "txn.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,13 +9,19 @@ extern "C" {
 
 #define EDB_ERROR_FILE_OPEN (1001)
 #define EDB_ERROR_FILE_SIZE (1002)
-#define ERR_EDB_DB_SIZE_MAX (1003)
 
-int
-edb_open(edb *db, const char* f_name, int readonly, int overwrite);
+// public interface to everdb
 
-void
-edb_close(edb *db);
+int edb_open(edb* db, const char* f_name, int only, int write);
+int edb_close(edb* db);
+
+int edb_txn_begin(edb* db);
+int edb_txn_commit(edb* db);
+int edb_txn_abort(edb* db);
+
+int edb_allocate_block(edb* db, u32 *const new_block);
+int edb_free_block(edb* db, u32 block);
+
 
 #ifdef __cplusplus
 }

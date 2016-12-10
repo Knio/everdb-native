@@ -16,11 +16,13 @@ TEST_CASE("integration") {
 
   // open new db + overwrite
   REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
-  REQUIRE(db->nblocks == 3);
 
+  REQUIRE(db->nblocks == 4);
   REQUIRE(db->freelist == 1);
+  REQUIRE(db->objlist == 3);
+  REQUIRE(db->txn == NULL);
 
-
+  REQUIRE(edb_txn_begin(db) == 0);
   u32 ar;
   REQUIRE(edb_allocate_block(db, &ar) == 0);
   REQUIRE(ar != 0);
@@ -62,5 +64,6 @@ TEST_CASE("integration") {
   REQUIRE(array_length(db, ar) == 0);
   REQUIRE(array_capacity(db, ar) == 510);
 
-  edb_close(db);
+  REQUIRE(edb_txn_commit(db) == 0);
+  REQUIRE(edb_close(db) == 0);
 }

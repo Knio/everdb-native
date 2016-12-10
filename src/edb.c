@@ -12,17 +12,20 @@
 #endif
 
 #include "edb.h"
-#include "io.h"
+
+#include "util.h"
 #include "math.h"
-#include "array.h"
+#include "io.h"
 #include "txn.h"
 
-#define FREELIST (1)
-#define OBJLIST (2)
-
+#include "array.h"
 
 int
 edb_init(edb *const db);
+
+int
+edb_check(const edb *const db);
+
 
 int
 edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
@@ -61,34 +64,63 @@ edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
 }
 
 
-void
+int
 edb_close(edb *const db) {
-  io_close(db);
+  return io_close(db);
 }
 
 
-int edb_init(edb *db) {
+int
+edb_check(const edb *const db) {
+  return 0;
+}
+
+
+int
+edb_init(edb *db) {
   int err = 0;
-  CHECK(io_resize(db, 3));
+  CHECK(io_resize(db, 4));
 
-  CHECK(array_init(db, FREELIST, sizeof(u32)));
-  CHECK(array_init(db, OBJLIST,  sizeof(u32)));
+  db->freelist = 1;
+  db->objlist = 3;
 
-  db->freelist = FREELIST;
-  db->objlist = OBJLIST;
+  CHECK(array_init(db, db->freelist, sizeof(u32)));
+  CHECK(array_init(db, db->objlist,  sizeof(u32)));
+
+  // CHECK(txn_begin(db));
 
   err:
   return err;
 }
 
 
-int edb_check(edb *db) {
+int
+edb_txn_begin(edb *db) {
+  int err = 0;
 
+  CHECK(txn_begin(db));
+
+  err:
+  return err;
 }
 
 
-int edb_allocate_block(edb *const db, u32 *const new_block) {
+int
+edb_txn_commit(edb *db) {
   int err = 0;
+
+  CHECK(txn_commit(db));
+
+  err:
+  return err;
+}
+
+
+int
+edb_allocate_block(edb *const db, u32 *const new_block) {
+  int err = 0;
+  CHECK(txn_modify_block(db, db->freelist, &db->freelist));
+
   u32 length = array_length(db, db->freelist);
 
   if (length > 0) {
@@ -105,7 +137,7 @@ int edb_allocate_block(edb *const db, u32 *const new_block) {
   CHECK(io_resize(db, (nblocks + step) & ~(step-1)));
 
   for (u32 i = nblocks + 1; i < db->nblocks; i++) {
-    array_push(db, db->freelist, &i);
+    CHECK(array_push(db, db->freelist, &i));
   }
   *new_block = nblocks;
   return 0;
@@ -114,7 +146,37 @@ int edb_allocate_block(edb *const db, u32 *const new_block) {
   return err;
 }
 
-int edb_free_block(edb *db, u32 page) {
-  return array_push(db, db->freelist, &page);
+
+int
+edb_free_block(edb *db, u32 page) {
+  int err = 0;
+
+  CHECK(txn_modify_block(db, db->freelist, &db->freelist));
+  CHECK(array_push(db, db->freelist, &page));
+
+  err:
+  return err;
 }
 
+
+u32
+edb_obj_root(obj_handle *h) {
+  int err = 0;
+
+  if (h->db->txn_id != h->txn_id) {
+    CHECK(array_get(h->db, h->db->objlist, h->obj_id, &h->root));
+    h->txn_id = h->db->txn_id;
+  }
+
+  return h->root;
+
+  err:
+  return 0;
+}
+
+
+
+int edb_array_get(obj_handle *h, u32 index, void* data) {
+  u32 block = edb_obj_root(h);
+  return array_get(h->db, block, index, data);
+}

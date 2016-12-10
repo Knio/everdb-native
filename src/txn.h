@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define EDB_ERR_TXN_NO_TRANSACTION (3001)
+
 int txn_begin(edb *db);
 int txn_begin_master(edb *db);
 int txn_allocate_block(edb *db, u32 *new_block);

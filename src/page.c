@@ -1,9 +1,10 @@
-#include "edb.h"
-#include "page.h"
-
 #ifdef __linux__
 #include <string.h> //memset
 #endif
+
+#include "edb.h"
+#include "util.h"
+#include "page.h"
 
 #define PAGE_TABLE(db, page) ((page_table*) (db->data + BLOCK_SIZE * page))
 #define INDEX_PAGE(db, page) ((index_page*) (db->data + BLOCK_SIZE * page))

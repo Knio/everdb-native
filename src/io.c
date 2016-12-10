@@ -12,6 +12,7 @@
 #endif
 
 #include "io.h"
+#include "util.h"
 
 int io_open(edb *const db, const char *const fname, int readonly, int overwrite) {
   int err = 0;
@@ -37,13 +38,13 @@ int io_open(edb *const db, const char *const fname, int readonly, int overwrite)
     0, NULL
   );
   if (db->h_file == INVALID_HANDLE_VALUE) {
-    err = IO_ERROR_FILE_OPEN;
+    err = EDB_ERR_IO_FILE_OPEN;
     goto err;
   }
 
   LARGE_INTEGER f_size;
   if (!GetFileSizeEx(db->h_file, &f_size)) {
-    err = EDB_ERROR_FILE_SIZE;
+    err = EDB_ERR_IO_FILE_SIZE;
     goto err;
   }
   db->filesize = f_size.QuadPart;
@@ -56,12 +57,12 @@ int io_open(edb *const db, const char *const fname, int readonly, int overwrite)
     0644
   );
   if (db->h_file < 0) {
-    err = IO_ERROR_FILE_OPEN;
+    err = EDB_ERR_IO_FILE_OPEN;
     goto err;
   }
   struct stat fi;
   if (fstat(db->h_file, &fi) < 0) {
-    err = IO_ERROR_FILE_SIZE;
+    err = EDB_ERR_IO_FILE_SIZE;
     goto err;
   }
   db->filesize = fi.st_size;
@@ -105,7 +106,27 @@ int io_open(edb *const db, const char *const fname, int readonly, int overwrite)
 }
 
 
-void io_close(edb *const db) {
+void io_map_close(edb *const db) {
+  #ifdef _WIN32
+  if (db->data) {
+    UnmapViewOfFile(db->data);
+    db->data = NULL;
+  }
+  if (db->h_mapping) {
+    CloseHandle(db->h_mapping);
+    db->h_mapping = NULL;
+  }
+
+  #elif __linux__
+  if(db->data) {
+    munmap(db->data, db->filesize);
+    db->data = NULL;
+  }
+  #endif
+}
+
+
+int io_close(edb *const db) {
   if (db == NULL) { return; }
   io_map_close(db);
 
@@ -120,13 +141,15 @@ void io_close(edb *const db) {
     db->h_file = -1;
   }
   #endif
+
+  return 0;
 }
 
 
 int io_resize(edb *const db, u32 nblocks) {
   int err = 0;
-  if (nblocks >= 0xffff00) {
-    return ERR_EDB_DB_SIZE_MAX;
+  if (nblocks >= 0xffffff00) {
+    return EDB_ERR_IO_SIZE_MAX;
   }
   u64 filesize = nblocks << BLOCK_BITS;
   long size_hi = 0;
@@ -217,24 +240,3 @@ int io_resize(edb *const db, u32 nblocks) {
   db->nblocks = 0;
   return err;
 }
-
-
-void io_map_close(edb *const db) {
-  #ifdef _WIN32
-  if (db->data) {
-    UnmapViewOfFile(db->data);
-    db->data = NULL;
-  }
-  if (db->h_mapping) {
-    CloseHandle(db->h_mapping);
-    db->h_mapping = NULL;
-  }
-
-  #elif __linux__
-  if(db->data) {
-    munmap(db->data, db->filesize);
-    db->data = NULL;
-  }
-  #endif
-}
-

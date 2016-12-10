@@ -11,7 +11,7 @@ io: core
     mmap
     resize
 
-page: core
+page: core, edb
 
 array: core, page
 

@@ -1,6 +1,7 @@
-#include "../lib/catch.hpp"
+#define CATCH_CONFIG_MAIN
+#include "../../lib/catch.hpp"
 
-#include "../src/io.h"
+#include "../../src/io.h"
 
 #ifdef __linux__
 #include <string.h> //memcpy

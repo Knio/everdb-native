@@ -19,10 +19,12 @@ TEST_CASE("array") {
 
   // open new db + overwrite
   REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
-  REQUIRE(db->nblocks == 3);
+  REQUIRE(db->nblocks == 4);
 
-  REQUIRE(io_resize(db, 2) == 0);
-  REQUIRE(db->nblocks == 2);
+
+  // REQUIRE(io_resize(db, 2) == 0);
+  // REQUIRE(db->nblocks == 2);
+  REQUIRE(edb_txn_begin(db) == 0);
 
   u64 x = 42, y = 43;
 
@@ -32,7 +34,7 @@ TEST_CASE("array") {
 
   array_init(db, 0, sizeof(u64));
 
-  u8* pt = BLOCK(db, 0);
+  u8* pt = db->data;
   array_header *ah = (array_header*)
       (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
   REQUIRE(ah->item_size == 8);
@@ -67,9 +69,10 @@ TEST_CASE("array") {
     // close and open db
     edb_close(db);
     REQUIRE(edb_open(db, "test.db", 0, 0) == 0);
-    REQUIRE(db->nblocks == 2);
+    REQUIRE(db->nblocks == 4);
+    // REQUIRE(edb_txn_begin(db) == 0);
 
-    pt = BLOCK(db, 0);
+    pt = db->data;
     ah = (array_header*)
       (pt + BLOCK_SIZE - sizeof(page_header) - sizeof(array_header));
 
@@ -109,6 +112,6 @@ TEST_CASE("array") {
   }
 
 
-  edb_close(db);
-
+  REQUIRE(edb_close(db) == 0);
+  delete db;
 }

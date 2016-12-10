@@ -8,6 +8,8 @@ TEST_CASE("mem_hash") {
 
     mem_hash* m = mem_hash_new();
 
+    REQUIRE(mem_hash_get(m, 1) == 0);
+
     mem_hash_set(m, 1, 2);
     REQUIRE(mem_hash_get(m, 1) == 2);
     REQUIRE(mem_hash_get(m, 2) == 0);

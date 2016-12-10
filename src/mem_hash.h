@@ -11,8 +11,14 @@
 
 #include "core.h"
 
+/*
 
-// fast u32->u32 in-memory hash table
+Fast u32->u32 in-memory hash table.
+
+- only grows, no shrink
+- keys or values of 0 means unset
+
+*/
 
 static const u32 HASH_SIZES[] = {
   3, 7,
@@ -105,6 +111,7 @@ void mem_hash_set(mem_hash *t, u32 k, u32 v) {
 }
 
 static inline u32 mem_hash_get(const mem_hash *t, u32 k) {
+  if (t->capacity == 0) { return 0; }
   u32 h = mem_hash_hash(k);
   u32 i = 0;
   mem_hash_item* entry;

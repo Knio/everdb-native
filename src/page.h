@@ -21,7 +21,6 @@ typedef struct page_t {
   u8 data[BLOCK_SIZE];
 } page;
 
-
 typedef struct page_header_t {
   // u8 header_length;
   u32 nblocks;

@@ -22,12 +22,6 @@ typedef uint64_t u64;
 #define BLOCK_SIZE (1 << BLOCK_BITS)
 #define BLOCK_MASK (BLOCK_SIZE - 1)
 
-#define BLOCK(db, index) ((db)->data + ((index) * BLOCK_SIZE))
-
-#define CHECK(exp) if ((err = (exp))) { goto err; }
-
-// struct txn_state_t;
-// typedef txn_state_t txn_state;
 typedef struct txn_state_t txn_state;
 
 typedef struct edb_t {
@@ -39,17 +33,31 @@ typedef struct edb_t {
   int h_file;
   void* h_map;
 #endif
+
   u8* data;
+
   u64 filesize;
   u32 nblocks;
+
   u32 freelist;
   u32 objlist;
+
+  u32 txn_id;
   txn_state* txn;
 } edb;
 
 
 int edb_allocate_block(edb* db, u32 *new_block);
 int edb_free_block(edb* db, const u32 block);
+
+
+typedef struct obj_handle_t
+{
+  edb *db;
+  u32 obj_id;
+  u32 txn_id;
+  u32 root;
+} obj_handle;
 
 
 #ifdef __cplusplus
