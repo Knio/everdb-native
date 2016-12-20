@@ -10,7 +10,7 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 Tests can then be run using any of the following:
 
 This calls ctest
-$ make test 
+$ make test
 
 CMake Test Runner, executes all test exes and displays a summary
 $ ctest

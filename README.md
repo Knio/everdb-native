@@ -17,8 +17,8 @@ TODO
 ----
 
 - [ ] Test windows build
-- [ ] Setup coverage
+- [x] Setup coverage
 - [x] Implement transactions API
-- [ ] Test transactions API
-- [ ] Port hash, array structs to use transactions
+- [x] Test transactions API
+- [x] Port hash, array structs to use transactions
 - [ ] Make root object API

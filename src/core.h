@@ -31,7 +31,7 @@ typedef struct edb_t {
   HANDLE h_mapping;
 #else
   int h_file;
-  void* h_map;
+  void* h_mapping;
 #endif
 
   u8* data;

@@ -11,11 +11,29 @@
 #endif
 
 
-TEST_CASE("integration") {
-  edb *db = new edb;
+TEST_CASE("edb") {
+  edb *db;
 
   // open new db + overwrite
-  REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
+  REQUIRE(edb_open(&db, "test.db", 0, 1) == 0);
+
+  REQUIRE(db->nblocks == 4);
+  REQUIRE(db->freelist == 1);
+  REQUIRE(db->objlist == 3);
+  REQUIRE(db->txn == NULL);
+
+  REQUIRE(edb_close(db) == 0);
+  REQUIRE(edb_open(&db, "test.db", 0, 1) == 0);
+  REQUIRE(edb_close(db) == 0);
+
+}
+
+
+
+TEST_CASE("integration") {
+  edb *db;
+  // open new db + overwrite
+  REQUIRE(edb_open(&db, "test.db", 0, 1) == 0);
 
   REQUIRE(db->nblocks == 4);
   REQUIRE(db->freelist == 1);
@@ -66,4 +84,5 @@ TEST_CASE("integration") {
 
   REQUIRE(edb_txn_commit(db) == 0);
   REQUIRE(edb_close(db) == 0);
+
 }

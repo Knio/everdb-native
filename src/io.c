@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <fcntl.h> // posix_fallocate
 #include <sys/mman.h> //mmap
 #include <string.h> //memset
 #else
@@ -127,7 +127,9 @@ void io_map_close(edb *const db) {
 
 
 int io_close(edb *const db) {
-  if (db == NULL) { return; }
+  if (db == NULL) {
+    return 0;
+  }
   io_map_close(db);
 
   #ifdef _WIN32
@@ -135,12 +137,16 @@ int io_close(edb *const db) {
     CloseHandle(db->h_file);
   }
   db->h_file = NULL;
+
   #elif __linux__
   if (db->h_file >= 0) {
     close(db->h_file);
-    db->h_file = -1;
+    db->h_file = 0;
   }
   #endif
+
+  db->filesize = 0;
+  db->nblocks = 0;
 
   return 0;
 }
@@ -148,15 +154,18 @@ int io_close(edb *const db) {
 
 int io_resize(edb *const db, u32 nblocks) {
   int err = 0;
+
+  LOG_DEBUG("io_resize nblocks=%d\n", nblocks);
+
   if (nblocks >= 0xffffff00) {
     return EDB_ERR_IO_SIZE_MAX;
   }
   u64 filesize = nblocks << BLOCK_BITS;
-  long size_hi = 0;
 
   io_map_close(db);
 
   #ifdef _WIN32
+  long size_hi = 0;
   if (db->filesize > filesize) {
     // truncate file
     size_hi = (long) (filesize >> 32);
@@ -200,19 +209,25 @@ int io_resize(edb *const db, u32 nblocks) {
     goto err;
   }
 
+  // ########################
   #elif __linux__
   if (db->filesize < filesize) {
-    if (posix_fallocate(db->h_file, 0, filesize) != 0) {
+    if (posix_fallocate(db->h_file, (off_t) 0, (off_t) filesize) != 0) {
+      perror("posix_fallocate");
       err = -11;
       goto err;
     }
   }
   if (db->filesize > filesize) {
-    if (ftruncate(db->h_file, filesize) < 0) {
+    int x;
+    if ((x = ftruncate(db->h_file, (off_t) filesize)) < 0) {
+      LOG_DEBUG("ftruncate: %d\n", x);
+      perror("ftruncate");
       err = -12;
       goto err;
     }
   }
+
   db->data = mmap(
     NULL,
     filesize,
@@ -222,7 +237,7 @@ int io_resize(edb *const db, u32 nblocks) {
     db->h_file,
     0
   );
-  if(db->data == (u8*) MAP_FAILED) {
+  if (db->data == (u8*) MAP_FAILED) {
     db->data = NULL;
     err = -9;
     goto err;

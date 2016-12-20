@@ -12,9 +12,10 @@ typedef struct txn_state_t {
   txn_state* next;
 } txn_state;
 
+
 TEST_CASE("txn") {
-  edb *db = (edb*)calloc(sizeof(edb), 1);
-  edb_open(db, "test.db", 0, 1);
+  edb *db;
+  edb_open(&db, "test.db", 0, 1);
 
   REQUIRE(db->txn == NULL);
 
@@ -22,6 +23,7 @@ TEST_CASE("txn") {
   REQUIRE(db->txn != NULL);
   REQUIRE(db->txn->next == NULL);
 
+  // TODO nested transactions unimplimented
   // REQUIRE(txn_begin(db) == 0);
   // REQUIRE(db->txn != NULL);
   // REQUIRE(db->txn->next != NULL);
@@ -30,23 +32,39 @@ TEST_CASE("txn") {
   // REQUIRE(db->txn != NULL);
   // REQUIRE(db->txn->next == NULL);
 
-  // REQUIRE(txn_commit(db) == 0); // unimplimented
-  // REQUIRE(db->txn == NULL); // Fails
-  // REQUIRE(txn_commit(db) != 0); // Segfaults
+  // SECTION("abort") {
 
-  REQUIRE(edb_close(db) == 0);
-  free(db);
+  //   REQUIRE(txn_abort(db) == 0);
+  //   REQUIRE(db->txn == NULL);
+  //   REQUIRE(txn_commit(db) != 0);
+  //   REQUIRE(txn_abort(db) != 0);
+  //   REQUIRE(edb_close(db) == 0);
+  //   free(db);
+
+  // }
+
+  // SECTION("commit") {
+    REQUIRE(txn_commit(db) == 0);
+    REQUIRE(db->txn == NULL);
+    REQUIRE(txn_commit(db) != 0);
+    // REQUIRE(txn_abort(db) != 0);
+    REQUIRE(edb_close(db) == 0);
+
+    // delete db;
+  // }
+
+
 }
 
 // TEST_CASE("txn_trivial_commit") {
 //   edb *db = new edb;
 
-//   REQUIRE(io_open(db, "test.db", 0, 1) == 0);
+//   REQUIRE(edb_open(db, "test.db", 0, 1) == 0);
 //   REQUIRE(db->txn == NULL);
 
 //   REQUIRE(txn_begin(db) == 0);
-//   REQUIRE(io_resize(db, 2) == 0);
-//   REQUIRE(db->nblocks == 2);
+//   REQUIRE(io_resize(db, 10) == 0);
+//   REQUIRE(db->nblocks == 10);
 
 //   REQUIRE(txn_begin(db) == 0);
 //   REQUIRE(io_resize(db, 8) == 0);
@@ -57,22 +75,25 @@ TEST_CASE("txn") {
 //   io_close(db);
 // }
 
-// TEST_CASE("txn_trivial_abort") {
-//   edb *db = new edb;
+TEST_CASE("txn_trivial_abort") {
+  edb *db;
 
-//   REQUIRE(io_open(db, "test.db", 0, 1) == 0);
-//   REQUIRE(db->txn == NULL);
+  REQUIRE(edb_open(&db, "test.db", 0, 1) == 0);
+  REQUIRE(db->txn == NULL);
+  REQUIRE(db->nblocks == 4);
 
-//   REQUIRE(txn_begin(db) == 0);
+  REQUIRE(txn_begin(db) == 0);
 
-//   REQUIRE(io_resize(db, 2) == 0);
-//   REQUIRE(db->nblocks == 2);
+  u32 new_block = 0;
+  REQUIRE(edb_allocate_block(db, &new_block) == 0);
+  REQUIRE(db->nblocks == 5);
 
-//   REQUIRE(txn_begin(db) == 0);
+  // TODO nested transactions
 
-//   REQUIRE(io_resize(db, 8) == 0);
-//   REQUIRE(txn_abort(db) == 0);
-//   REQUIRE(db->nblocks == 2);
+  REQUIRE(txn_abort(db) == 0);
+  REQUIRE(db->nblocks == 4);
 
-//   io_close(db);
-// }
+  REQUIRE(edb_close(db) == 0);
+
+  // delete db;
+}

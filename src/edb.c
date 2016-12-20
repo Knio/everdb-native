@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdlib.h> // calloc, free
 #include <sys/mman.h> //mmap
 #include <string.h> //memset
 #else
@@ -14,7 +15,6 @@
 #include "edb.h"
 
 #include "util.h"
-#include "math.h"
 #include "io.h"
 #include "txn.h"
 
@@ -28,7 +28,7 @@ edb_check(const edb *const db);
 
 
 int
-edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
+edb_open(edb **const dbp, const char *const fname, int readonly, int overwrite) {
   /*
   open everdb database file `fname`
 
@@ -41,12 +41,31 @@ edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
   */
 
   int err = 0;
+  LOG_DEBUG("edb_open: %p from:%s readonly:%d overwrite:%d\n",
+      dbp, fname, readonly, overwrite);
+
+  edb *db = calloc(1, sizeof(edb));
+  *dbp = db;
+
+  // CHECK_CODE(db->h_file     == NULL,  EDB_ERROR_ALREADY_OPEN);
+  // CHECK_CODE(db->h_mapping  == NULL,  EDB_ERROR_ALREADY_OPEN);
+  // CHECK_CODE(db->data       == NULL,  EDB_ERROR_ALREADY_OPEN);
+  // CHECK_CODE(db->filesize   == 0,     EDB_ERROR_ALREADY_OPEN);
+  // CHECK_CODE(db->nblocks    == 0,     EDB_ERROR_ALREADY_OPEN);
+  // CHECK_CODE(db->freelist   == 0,     EDB_ERROR_ALREADY_OPEN);
+  // CHECK_CODE(db->objlist    == 0,     EDB_ERROR_ALREADY_OPEN);
+  // CHECK_CODE(db->txn_id     == 0,     EDB_ERROR_ALREADY_OPEN);
+
   CHECK(io_open(db, fname, readonly, overwrite));
 
   int is_new = 0;
   if (overwrite || (readonly = 0 && db->nblocks == 1)) {
     is_new = 1;
   }
+
+  db->readonly = readonly;
+  db->freelist = 1;
+  db->objlist = 3;
 
   if (is_new) {
     CHECK(edb_init(db));
@@ -56,17 +75,29 @@ edb_open(edb *const db, const char *const fname, int readonly, int overwrite) {
     CHECK(edb_check(db));
   }
 
-  return 0;
+  return err;
 
   err:
   io_close(db);
+  free(db);
+  *dbp = NULL;
+
   return err;
 }
 
 
 int
 edb_close(edb *const db) {
-  return io_close(db);
+  int err = 0;
+  LOG_DEBUG("edb_close: %p\n", db);
+
+  CHECK_CODE(db->txn == NULL, EDB_ERROR_OPEN_TXN);
+  CHECK(io_close(db));
+
+  free(db);
+
+  err:
+  return err;
 }
 
 
@@ -81,13 +112,8 @@ edb_init(edb *db) {
   int err = 0;
   CHECK(io_resize(db, 4));
 
-  db->freelist = 1;
-  db->objlist = 3;
-
   CHECK(array_init(db, db->freelist, sizeof(u32)));
   CHECK(array_init(db, db->objlist,  sizeof(u32)));
-
-  // CHECK(txn_begin(db));
 
   err:
   return err;
@@ -98,6 +124,7 @@ int
 edb_txn_begin(edb *db) {
   int err = 0;
 
+  CHECK_CODE(db->readonly == 0, EDB_ERROR_READ_ONLY);
   CHECK(txn_begin(db));
 
   err:
@@ -116,51 +143,29 @@ edb_txn_commit(edb *db) {
 }
 
 
+// blocl device api
 int
 edb_allocate_block(edb *const db, u32 *const new_block) {
-  int err = 0;
-  CHECK(txn_modify_block(db, db->freelist, &db->freelist));
-
-  u32 length = array_length(db, db->freelist);
-
-  if (length > 0) {
-    CHECK(array_pop(db, db->freelist, new_block));
-    return 0;
-  }
-
-  u32 nblocks = db->nblocks;
-  u32 step = next_power_of_two(nblocks >> 3);
-
-  // NOTE: after resizing, db->data has changed and all local pointers
-  // need to be updated!
-
-  CHECK(io_resize(db, (nblocks + step) & ~(step-1)));
-
-  for (u32 i = nblocks + 1; i < db->nblocks; i++) {
-    CHECK(array_push(db, db->freelist, &i));
-  }
-  *new_block = nblocks;
-  return 0;
-
-  err:
-  return err;
+  return txn_allocate_block(db, new_block);
 }
 
 
 int
-edb_free_block(edb *db, u32 page) {
-  int err = 0;
-
-  CHECK(txn_modify_block(db, db->freelist, &db->freelist));
-  CHECK(array_push(db, db->freelist, &page));
-
-  err:
-  return err;
+edb_modify_block(edb *const db, u32 block, u32 *const new_block) {
+  return txn_modify_block(db, block, new_block);
 }
 
 
+int
+edb_free_block(edb *db, u32 block) {
+  return txn_free_block(db, block);
+}
+
+
+
+static inline
 u32
-edb_obj_root(obj_handle *h) {
+edb_obj_root(obj_handle* h) {
   int err = 0;
 
   if (h->db->txn_id != h->txn_id) {
@@ -171,12 +176,52 @@ edb_obj_root(obj_handle *h) {
   return h->root;
 
   err:
-  return 0;
+  return 0xfffffffa;
 }
 
+
+
+int edb_array_create(edb *db, obj_handle **hp, const u8 item_size) {
+  int err = 0;
+  obj_handle* h = calloc(1, sizeof(obj_handle));
+  *hp = h;
+
+  h->db = db;
+  h->txn_id = db->txn_id;
+  h->obj_id = array_length(db, db->objlist);
+  CHECK(edb_allocate_block(db, &h->root));
+  CHECK(array_init(db, h->root, item_size));
+
+  err:
+  return err;
+}
 
 
 int edb_array_get(obj_handle *h, u32 index, void* data) {
   u32 block = edb_obj_root(h);
   return array_get(h->db, block, index, data);
 }
+
+int edb_array_set(obj_handle *h, u32 index, void* data) {
+  u32 block = edb_obj_root(h);
+  return array_get(h->db, block, index, data);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
