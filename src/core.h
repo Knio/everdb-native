@@ -51,15 +51,6 @@ int edb_allocate_block(edb* db, u32 *new_block);
 int edb_free_block(edb* db, const u32 block);
 
 
-typedef struct obj_handle_t
-{
-  edb *db;
-  u32 obj_id;
-  u32 txn_id;
-  u32 root;
-} obj_handle;
-
-
 #ifdef __cplusplus
 }
 #endif

@@ -143,7 +143,7 @@ edb_txn_commit(edb *db) {
 }
 
 
-// blocl device api
+// block device api
 int
 edb_allocate_block(edb *const db, u32 *const new_block) {
   return txn_allocate_block(db, new_block);
@@ -161,6 +161,16 @@ edb_free_block(edb *db, u32 block) {
   return txn_free_block(db, block);
 }
 
+
+
+
+typedef struct obj_handle_t
+{
+  edb *db;
+  u32 obj_id;
+  u32 txn_id;
+  u32 root;
+} obj_handle;
 
 
 static inline
@@ -181,7 +191,8 @@ edb_obj_root(obj_handle* h) {
 
 
 
-int edb_array_create(edb *db, obj_handle **hp, const u8 item_size) {
+int
+edb_array_create(edb *db, obj_handle **hp, const u8 item_size) {
   int err = 0;
   obj_handle* h = calloc(1, sizeof(obj_handle));
   *hp = h;
@@ -196,6 +207,18 @@ int edb_array_create(edb *db, obj_handle **hp, const u8 item_size) {
   return err;
 }
 
+int
+edb_array_open(edb *db, obj_handle **hp, const u32 obj_id) {
+  obj_handle *h = calloc(1, sizeof(obj_handle));
+  *hp == h;
+
+  h->db = db;
+  h->obj_id = obj_id;
+  h->txn_id = db->txn_id;
+
+  return 0;
+}
+
 
 int edb_array_get(obj_handle *h, u32 index, void* data) {
   u32 block = edb_obj_root(h);
@@ -207,19 +230,25 @@ int edb_array_set(obj_handle *h, u32 index, void* data) {
   return array_get(h->db, block, index, data);
 }
 
+int edb_array_push(obj_handle *h, void* data) {
+  u32 block = edb_obj_root(h);
+  return array_push(h->db, block, data);
+}
 
+int edb_array_pop(obj_handle *h, void* data) {
+  u32 block = edb_obj_root(h);
+  return array_pop(h->db, block, data);
+}
 
+u32 edb_array_length(obj_handle *h) {
+  u32 block = edb_obj_root(h);
+  return array_length(h->db, block);
+}
 
-
-
-
-
-
-
-
-
-
-
+u32 edb_array_capacity(obj_handle *h) {
+  u32 block = edb_obj_root(h);
+  return array_capacity(h->db, block);
+}
 
 
 
