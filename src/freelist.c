@@ -24,7 +24,6 @@ freelist_allocate_block(edb* db, u32* new_block) {
 
   // NOTE: after resizing, db->data has changed and all local pointers
   // need to be updated!
-
   CHECK(io_resize(db, (nblocks + step) & ~(step-1)));
 
   for (u32 i = nblocks + 1; i < db->nblocks; i++) {
@@ -41,7 +40,8 @@ freelist_allocate_block(edb* db, u32* new_block) {
 int
 freelist_free_block(edb *db, u32 block) {
   int err = 0;
-
+  LOG_DEBUG("block: %d\n", block);
+  CHECK_CODE(block >= EDB_USER_DATA, block);
   CHECK(txn_modify_block(db, db->freelist, &db->freelist));
   CHECK(array_push(db, db->freelist, &block));
 

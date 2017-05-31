@@ -36,7 +36,9 @@ int array_resize(edb* const db, const u32 root, const u32 capacity) {
     if (pt->nblocks != 0) {
       // make small block
       data = malloc(BLOCK_SIZE);
-      u8* first_block = BLOCK(db, page_get_host_index(db, root, 0));
+      u32 first_page;
+      CHECK(page_write_host_index(db, root, 0, &first_page));
+      u8* first_block = BLOCK(db, first_page);
       memcpy(data, first_block, small_capacity * pt->item_size);
       if ((err = page_resize(db, root, 0))) {
           goto err;
@@ -91,7 +93,9 @@ int array_resize(edb* const db, const u32 root, const u32 capacity) {
     }
     pt = PAGE_TABLE_ARRAY(db, root);
     if (data) {
-      u8* first_block = BLOCK(db, page_get_host_index(db, root, 0));
+      u32 first_page;
+      CHECK(page_write_host_index(db, root, 0, &first_page));
+      u8* first_block = BLOCK(db, first_page);
       memcpy(first_block, data, small_capacity * pt->item_size);
       free(data);
       data = NULL;
@@ -133,6 +137,8 @@ u32 array_capacity(const edb* const db, const u32 root) {
 
 
 static inline void* array_data(const edb* const db, const u32 root, const u32 index) {
+  int err = 0;
+
   const page_table_array const* pt = PAGE_TABLE_ARRAY(db, root);
 
   if (index >= pt->length) {
@@ -147,15 +153,21 @@ static inline void* array_data(const edb* const db, const u32 root, const u32 in
   }
   else {
     const u32 items_per_block = BLOCK_SIZE / pt->item_size;
-    block = BLOCK(db, page_get_host_index(db, root, index / items_per_block));
+    u32 page;
+    CHECK(page_write_host_index(db, root, index / items_per_block, &page));
+    block = BLOCK(db, page);
     local_index = index % items_per_block;
   }
 
   return (void*) (block + (local_index * pt->item_size));
+
+  err:
+  abort();
 }
 
 
 int array_get(const edb* const db, const u32 root, const u32 index, void* data) {
+  LOG_DEBUG("root:%d index:%d\n", root, index);
   const page_table_array const* pt = PAGE_TABLE_ARRAY(db, root);
 
   const void const* element = array_data(db, root, index);
@@ -173,6 +185,7 @@ int array_get(const edb* const db, const u32 root, const u32 index, void* data) 
 
 
 int array_set(edb* const db, const u32 root, const u32 index, const void* data) {
+  LOG_DEBUG("root:%d index:%d\n", root, index);
   const page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
 
   void* const element = array_data(db, root, index);
@@ -190,6 +203,7 @@ int array_set(edb* const db, const u32 root, const u32 index, const void* data) 
 
 
 int array_push(edb* const db, const u32 root, const void *data) {
+  LOG_DEBUG("root:%d\n", root);
   int err = 0;
 
   page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
@@ -209,6 +223,7 @@ int array_push(edb* const db, const u32 root, const void *data) {
 
 
 int array_pop(edb* const db, const u32 root, void* data) {
+  LOG_DEBUG("root:%d\n", root);
   int err = 0;
   page_table_array* const pt = PAGE_TABLE_ARRAY(db, root);
 

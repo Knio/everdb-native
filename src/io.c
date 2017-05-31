@@ -2,7 +2,7 @@
 #include <windows.h>
 #elif __linux__
 #include <unistd.h>
-#include <sys/types.h>
+#include <sys/types.h> // ftruncate
 #include <sys/stat.h>
 #include <fcntl.h> // posix_fallocate
 #include <sys/mman.h> //mmap

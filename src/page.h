@@ -16,6 +16,7 @@ extern "C" {
 #define INDEX0(index) ((index - LEVEL_ONE) >> INDEX_BITS)
 #define INDEX1(index) ((index - LEVEL_ONE) & INDEX_MASK)
 
+#define EDB_ERR_PAGE_OUT_OF_BOUNDS (1060)
 
 typedef struct page_t {
   u8 data[BLOCK_SIZE];
@@ -45,14 +46,12 @@ typedef struct page_table_t {
 } page_table;
 
 
-void
-page_init(edb *db, const u32 root);
+void page_init(edb *db, const u32 root);
 
-u32
-page_get_host_index(const edb *db, const u32 root, const u32 index);
+int page_read_host_index(const edb *const db, const u32 root, const u32 index, u32 *const block);
+int page_write_host_index(edb *const db, const u32 root, const u32 index, u32 *const block);
 
-int
-page_resize(edb *db, const u32 root, const u32 nblocks);
+int page_resize(edb *db, const u32 root, const u32 nblocks);
 
 
 #ifdef __cplusplus

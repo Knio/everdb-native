@@ -22,6 +22,11 @@ typedef uint64_t u64;
 #define BLOCK_SIZE (1 << BLOCK_BITS)
 #define BLOCK_MASK (BLOCK_SIZE - 1)
 
+#define EDB_FREELIST_PRIMARY (1)
+#define EDB_FREELIST_SECONDARY (2)
+#define EDB_OBJLIST (3)
+#define EDB_USER_DATA (4)
+
 typedef struct txn_state_t txn_state;
 
 typedef struct edb_t {

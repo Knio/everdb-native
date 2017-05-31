@@ -62,17 +62,19 @@ txn_free_block(edb *db, u32 block) {
     CHECK_CODE(db->txn != NULL, EDB_ERR_TXN_NO_TRANSACTION);
 
     u32 block_state = mem_hash_get(db->txn->blocks, block);
+
     if (block_state == ALLOCATED) {
         // newly allocated in this transaction, can just free it
         mem_hash_set(db->txn->blocks, block, 0);
         freelist_free_block(db, block);
         return 0;
     }
-    if (block_state == FREED) {
-        err = -1;
+    else if (block_state == FREED) {
+        // double free this transaction
+        err = EDB_ERR_TXN_INVALID_BLOCK;
         goto err;
     }
-    if (block_state != 0) {
+    else if (block_state != 0) {
         // copy-on-write allocated in this transaction. pop and free it,
         // and mark the original as freed
         mem_hash_set(db->txn->blocks, block, 0);
@@ -80,8 +82,10 @@ txn_free_block(edb *db, u32 block) {
         freelist_free_block(db, block);
         return 0;
     }
-    // old block, mark as freed to act on commit/abort
-    mem_hash_set(db->txn->blocks, block, FREED);
+    else {
+        // old block, mark as freed to act on commit/abort
+        mem_hash_set(db->txn->blocks, block, FREED);
+    }
 
     err:
     return err;
@@ -123,17 +127,24 @@ txn_modify_block(edb *db, u32 block, u32* new_block) {
 
 int
 txn_begin_master(edb *db) {
-    // first transcation
-    // bootstrap the freelist cow block
+    LOG_HERE;
     int err = 0;
-    LOG_DEBUG("%s\n", "txn_begin_master");
 
-    CHECK_CODE(db->freelist == 1, 3111);
-    CHECK_CODE(db->objlist == 3,  3112);
+    CHECK_CODE(db->freelist == EDB_FREELIST_PRIMARY, 3111);
+    CHECK_CODE(db->objlist == EDB_OBJLIST,  3112);
 
-    memcpy(BLOCK(db, 2), BLOCK(db, 1), BLOCK_SIZE);
-    mem_hash_set(db->txn->blocks, 2, 1);
-    db->freelist = 2;
+    // bootstrap the freelist cow block
+    memcpy(
+        BLOCK(db, EDB_FREELIST_SECONDARY),
+        BLOCK(db, EDB_FREELIST_PRIMARY),
+        BLOCK_SIZE
+    );
+
+    // mark secondary as cow to primary
+    mem_hash_set(
+        db->txn->blocks, EDB_FREELIST_SECONDARY, EDB_FREELIST_PRIMARY);
+
+    db->freelist = EDB_FREELIST_SECONDARY;
 
     err:
     return err;
@@ -142,8 +153,8 @@ txn_begin_master(edb *db) {
 
 int
 txn_begin(edb *db) {
+    LOG_HERE;
     int err = 0;
-    LOG_DEBUG("%s\n", "txn_begin");
 
     txn_state* ts = txn_state_new();
     ts->next = db->txn;
@@ -172,11 +183,14 @@ txn_begin(edb *db) {
 
 int
 txn_commit_master(edb *db) {
+    LOG_HERE;
     int err = 0;
-    LOG_DEBUG("%s\n", "txn_commit_master");
 
     txn_state* ts = db->txn;
-    CHECK_CODE(mem_hash_get(ts->blocks, 2) == 1, EDB_ERR_TXN_NOT_IMPLEMENTED);
+    CHECK_CODE(ts != NULL, EDB_ERR_TXN_NO_TRANSACTION);
+    CHECK_CODE(ts->next == NULL, -3);
+    CHECK_CODE(mem_hash_get(ts->blocks, EDB_FREELIST_SECONDARY) ==
+            EDB_FREELIST_PRIMARY, -4);
 
     // clear transacction state
     mem_hash_item* e;
@@ -187,7 +201,7 @@ txn_commit_master(edb *db) {
             continue;
         }
 
-        if (e->k == 2) {
+        if (e->k == EDB_FREELIST_SECONDARY) {
             // freelist special case
             // we'll handle this below
             continue;
@@ -195,16 +209,19 @@ txn_commit_master(edb *db) {
 
         if (e->k == db->objlist) {
             // objlist
-            memcpy(BLOCK(db, 3), BLOCK(db, e->k), BLOCK_SIZE);
+            LOG_DEBUG("copying objlist root back to primary\n", NULL);
+            memcpy(BLOCK(db, EDB_OBJLIST), BLOCK(db, db->objlist), BLOCK_SIZE);
             CHECK(freelist_free_block(db, e->k));
-            db->objlist = 3;
-        }
-
-        if (e->v == ALLOCATED) {
+            db->objlist = EDB_OBJLIST;
             continue;
         }
 
-        if (e->v == FREED) {
+        if (e->v == ALLOCATED) {
+            // stays allocated
+            continue;
+        }
+
+        else if (e->v == FREED) {
             // freed blocks actually freed
             CHECK(freelist_free_block(db, e->k));
             continue;
@@ -212,17 +229,20 @@ txn_commit_master(edb *db) {
 
         else {
             // free parent of cow'd blocks
+            LOG_HERE;
             CHECK(freelist_free_block(db, e->v));
             continue;
         }
     }
 
     // handle freelist
-    memcpy(BLOCK(db, 1), BLOCK(db, db->freelist), BLOCK_SIZE);
-    db->freelist = 1;
+    LOG_DEBUG("copying freelist root back to primary\n", NULL);
+    memcpy(BLOCK(db, EDB_FREELIST_PRIMARY), BLOCK(db, db->freelist), BLOCK_SIZE);
+    db->freelist = EDB_FREELIST_PRIMARY;
 
     txn_state_free(ts);
     db->txn = NULL;
+    db->txn_id++;
 
     err:
     return err;
@@ -231,16 +251,16 @@ txn_commit_master(edb *db) {
 
 int
 txn_commit(edb *db) {
+    LOG_HERE;
     int err = 0;
-    LOG_DEBUG("%s\n", "txn_commit");
 
     txn_state* ts = db->txn;
     CHECK_CODE(ts != NULL, EDB_ERR_TXN_NO_TRANSACTION);
 
     txn_state* parent = ts->next;
     if (parent == NULL) {
-        err = txn_commit_master(db);
-        goto err;
+        CHECK(txn_commit_master(db));
+        return 0;
     }
 
     // merge everything we did into the parent txn
@@ -307,8 +327,9 @@ txn_commit(edb *db) {
         }
     }
 
-    db->txn = parent;
     txn_state_free(ts);
+    db->txn = parent;
+    db->txn_id++;
 
     err:
     return err;
@@ -317,18 +338,19 @@ txn_commit(edb *db) {
 
 int
 txn_abort_master(edb *db) {
+    LOG_HERE;
     int err = 0;
-    LOG_DEBUG("%s\n", "txn_abort");
 
     txn_state* ts = db->txn;
 
-    db->freelist = 1;
-    db->objlist = 3;
+    db->freelist = EDB_FREELIST_PRIMARY;
+    db->objlist = EDB_OBJLIST;
 
     CHECK(io_resize(db, ts->nblocks));
 
     txn_state_free(ts);
     db->txn = NULL;
+    db->txn_id++;
 
 
     err:
@@ -366,6 +388,7 @@ txn_abort(edb *db) {
     }
 
     txn_state_free(ts);
+    db->txn_id++;
 
     err:
     return err;

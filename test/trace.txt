@@ -1,0 +1,24 @@
+define functiontrace
+    break $arg0
+    commands
+        info locals
+        continue
+    end
+end
+
+
+break test_integration.cpp:52 if (i == 262142)
+
+
+
+r
+
+functiontrace array_push
+functiontrace array_pop
+functiontrace page_resize
+functiontrace edb_allocate_block
+functiontrace edb_free_block
+
+c
+
+q

@@ -3,22 +3,27 @@
 
 #define BLOCK(db, index) ((db)->data + ((index) * BLOCK_SIZE))
 
-// #ifdef DEBUG
-// #define LOG_DEBUG(msg) printf(msg);
-// #else
-// #define LOG_DEBUG(msg)
-// #endif
-
 #include <stdio.h>
+#ifdef DEBUG
 #define LOG_DEBUG(fmt, ...) \
     do { \
         fprintf(stderr, \
-            "DEBUG:%s:%d:%s " fmt, \
+            "DEBUG:%s:%d:%s: " fmt, \
             __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__); \
     } while (0);
 
+#define LOG_HERE \
+    do { \
+        fprintf(stderr, \
+            "DEBUG:%s:%d:%s\n", \
+            __FILE__, __LINE__, __FUNCTION__); \
+    } while (0);
+#else
 
-// #define LOG_DEBUG(fmt, ...)
+#define LOG_DEBUG(...)
+#define LOG_HERE
+
+#endif
 
 #define CHECK(exp) \
     if ((err = (exp))) { goto err; }

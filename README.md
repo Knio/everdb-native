@@ -11,7 +11,7 @@ everdb-native
 
 ## Should I Use this?
 
-No. Check back in Q2 2017.
+No. Check back in Q4 2017.
 
 TODO
 ----
@@ -19,6 +19,6 @@ TODO
 - [ ] Test windows build
 - [x] Setup coverage
 - [x] Implement transactions API
-- [x] Test transactions API
-- [x] Port hash, array structs to use transactions
+- [ ] Test transactions API
+- [ ] Port hash, array structs to use transactions
 - [ ] Make root object API
