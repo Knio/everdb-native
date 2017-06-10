@@ -20,7 +20,7 @@ TEST_CASE("array_api") {
   obj_handle* h;
 
   // fail - no transaction
-  REQUIRE(edb_array_create(db, &h, sizeof(x)) == 3001);
+  REQUIRE(edb_array_create(db, &h, sizeof(x)) == 2001);
   REQUIRE(h == NULL);
 
   REQUIRE(edb_txn_begin(db) == 0);
@@ -46,14 +46,14 @@ TEST_CASE("array_api") {
   REQUIRE(l == 510);
   REQUIRE(edb_array_get(h, 0, &y) == 0);
   REQUIRE(y == x);
-  REQUIRE(edb_array_get(h, 1, &y) == 4101);
+  REQUIRE(edb_array_get(h, 1, &y) == 3201);
 
   // modify it to 43
   x = 43;
   REQUIRE(edb_array_set(h, 0, &x) == 0);
   REQUIRE(edb_array_get(h, 0, &y) == 0);
   REQUIRE(y == x);
-  REQUIRE(edb_array_get(h, 1, &y) == 4101);
+  REQUIRE(edb_array_get(h, 1, &y) == 3201);
 
   // commit
   REQUIRE(edb_txn_commit(db) == 0);
@@ -63,7 +63,7 @@ TEST_CASE("array_api") {
   REQUIRE(l == 1);
   REQUIRE(edb_array_get(h, 0, &y) == 0);
   REQUIRE(y == x);
-  REQUIRE(edb_array_get(h, 1, &y) == 4101);
+  REQUIRE(edb_array_get(h, 1, &y) == 3201);
 
   // new transaction - pop and abort
   REQUIRE(edb_txn_begin(db) == 0);
@@ -71,7 +71,7 @@ TEST_CASE("array_api") {
   REQUIRE(l == 1);
   REQUIRE(edb_array_get(h, 0, &y) == 0);
   REQUIRE(y == x);
-  REQUIRE(edb_array_get(h, 1, &y) == 4101);
+  REQUIRE(edb_array_get(h, 1, &y) == 3201);
 
 
   REQUIRE(edb_array_length(h, &l) == 0);

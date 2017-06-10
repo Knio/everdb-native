@@ -7,6 +7,10 @@
 #include <windows.h>
 #endif
 
+#ifdef __linux__
+#include <string.h> //memset
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,6 +30,8 @@ typedef uint64_t u64;
 #define EDB_FREELIST_SECONDARY (2)
 #define EDB_OBJLIST (3)
 #define EDB_USER_DATA (4)
+
+#define EDB_ERROR_DATA_CORRUPT (1901)
 
 typedef struct txn_state_t txn_state;
 

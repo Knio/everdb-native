@@ -16,7 +16,7 @@ extern "C" {
 #define INDEX0(index) ((index - LEVEL_ONE) >> INDEX_BITS)
 #define INDEX1(index) ((index - LEVEL_ONE) & INDEX_MASK)
 
-#define EDB_ERR_PAGE_OUT_OF_BOUNDS (1060)
+#define EDB_ERR_PAGE_OUT_OF_BOUNDS (3101)
 
 typedef struct page_t {
   u8 data[BLOCK_SIZE];

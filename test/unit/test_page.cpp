@@ -1,50 +1,14 @@
 #define CATCH_CONFIG_MAIN
 #include "../../lib/catch.hpp"
 
+#include "edb_mock.h"
 #include "../../src/page.h"
 
 
-#include <vector>
-std::vector<u32> freelist;
-
-// block API stubs
-extern "C" {
-
-int edb_allocate_block(edb *const db, u32 *const new_block) {
-  if (freelist.size()) {
-    u32 back = freelist.back();
-    freelist.pop_back();
-    *new_block = back;
-    return 0;
-  }
-  return -1;
-}
-
-int edb_free_block(edb* db, const u32 block) {
-  freelist.push_back(block);
-  return 0;
-}
-
-
-int edb_modify_block(edb* db, const u32 block, u32 *const new_block) {
-  *new_block = block;
-  return 0;
-}
-
-
-} // extern "C"
-
-
 TEST_CASE("page") {
+  init_edb_mock();
+
   REQUIRE(sizeof(page_header) == 4);
-
-  edb *db = new edb;
-
-  // fake allocate db and 1024 unused pages
-  db->data = (u8*) malloc(BLOCK_SIZE * 1024);
-  for (u32 i=1; i<1024; i++) {
-    freelist.push_back(i);
-  }
 
   page_init(db, 0);
   u32* level1 = (u32*) db->data;

@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define ERR_ARRAY_INDEX_OUT_OF_BOUNDS (4101)
+#define ERR_ARRAY_INDEX_OUT_OF_BOUNDS (3201)
 
 typedef struct array_header_t {
     u8 item_size;

@@ -7,9 +7,9 @@
 extern "C" {
 #endif
 
-#define EDB_ERR_TXN_NO_TRANSACTION (3001)
-#define EDB_ERR_TXN_INVALID_BLOCK (3003)
-#define EDB_ERR_TXN_NOT_IMPLEMENTED (3099)
+#define EDB_ERR_TXN_NO_TRANSACTION (2001)
+#define EDB_ERR_TXN_INVALID_BLOCK (2003)
+#define EDB_ERR_TXN_NOT_IMPLEMENTED (2099)
 
 int txn_begin(edb *db);
 int txn_begin_master(edb *db);

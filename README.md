@@ -19,6 +19,20 @@ TODO
 - [ ] Test windows build
 - [x] Setup coverage
 - [x] Implement transactions API
-- [ ] Test transactions API
-- [ ] Port hash, array structs to use transactions
-- [ ] Make root object API
+- [x] Test transactions API
+- [x] Port array structs to use transactions
+- [x] Make root object API
+- [x] Prototype B+ tree
+    - [x] Add
+    - [x] Split when full
+        - [x] Test
+    - [x] Pop
+    - [x] Combine when empty
+        - [x] Test
+    - [x] First/Last
+    - [ ] Root API
+        - [x] Grow from root
+- [ ] Add Checksumming
+    - [ ] Page tables
+    - [ ] Btree
+    - [ ] Array

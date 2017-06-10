@@ -1,7 +1,3 @@
-#ifdef __linux__
-#include <string.h> //memset
-#endif
-
 #include "edb.h"
 #include "util.h"
 #include "page.h"

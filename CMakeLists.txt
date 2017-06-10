@@ -8,6 +8,7 @@ SET(CMAKE_BUILD_TYPE "Debug")
 
 SET(CMAKE_C_FLAGS "-std=c99 -fms-extensions")
 SET(CMAKE_C_FLAGS_DEBUG   "-std=c99 -Wall -fms-extensions -g --coverage")
+# SET(CMAKE_C_FLAGS_DEBUG   "-std=c99 -Wall -fms-extensions -g --coverage -DDEBUG")
 SET(CMAKE_C_FLAGS_RELEASE "-std=c99 -Wall -fms-extensions -O2")
 
 SET(CMAKE_CXX_FLAGS "-fms-extensions -fpermissive -O3")
@@ -20,6 +21,7 @@ SET(SRCS
     src/page.c
     src/array.c
     src/hash.c
+    src/btree.c
     src/freelist.c
     src/txn.c
     src/edb.c
