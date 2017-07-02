@@ -242,6 +242,8 @@ int io_resize(edb *const db, u32 nblocks) {
     err = -9;
     goto err;
   }
+
+  // mprotect(db->data, nblocks << BLOCK_BITS, PROT_READ);
   #endif
 
   db->filesize = filesize;

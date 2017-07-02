@@ -32,6 +32,7 @@ typedef uint64_t u64;
 #define EDB_USER_DATA (4)
 
 #define EDB_ERROR_DATA_CORRUPT (1901)
+#define EDB_ERROR_DATA_READONLY (1902)
 
 typedef struct txn_state_t txn_state;
 
@@ -58,9 +59,9 @@ typedef struct edb_t {
 } edb;
 
 
-int edb_allocate_block(edb* db, u32 *new_block);
-int edb_free_block(edb* db, const u32 block);
-
+int edb_allocate_block(edb *const db, u32 *const new_block);
+int edb_free_block(edb *const db, const u32 block);
+int edb_is_writable(const edb *const db, const u32 block);
 
 #ifdef __cplusplus
 }

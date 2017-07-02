@@ -10,27 +10,27 @@ extern "C" {
 
 #define ERR_ARRAY_INDEX_OUT_OF_BOUNDS (3201)
 
-typedef struct array_header_t {
-    u8 item_size;
-    u32 length;
-} array_header;
+// typedef struct array_header_t {
+//     u8 item_size;
+//     u32 length;
+// } array_header;
 
-#ifdef _MSC_VER
-#pragma warning(disable:4201)
-#endif
-typedef struct page_table_array_t {
-  union {
-    struct page_table_t;
-    struct {
-      u8 __padding_array[BLOCK_SIZE
-          - sizeof(struct array_header_t)
-          - sizeof(struct page_header_t)
-      ];
-      struct array_header_t;
-      // page_header_t
-    };
-  };
-} page_table_array;
+// #ifdef _MSC_VER
+// #pragma warning(disable:4201)
+// #endif
+// typedef struct page_table_array_t {
+//   union {
+//     struct page_table_t;
+//     struct {
+//       u8 __padding_array[BLOCK_SIZE
+//           - sizeof(struct array_header_t)
+//           - sizeof(struct page_header_t)
+//       ];
+//       struct array_header_t;
+//       // page_header_t
+//     };
+//   };
+// } page_table_array;
 
 
 int array_init(edb* db, const u32 root, const u8 item_size);

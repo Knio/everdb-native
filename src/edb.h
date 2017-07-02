@@ -27,28 +27,28 @@ typedef struct edb_t edb;
 typedef struct obj_handle_t obj_handle;
 
 // edb
-int edb_open(edb **db, const char *f_name, int readonly, int overwrite);
-int edb_close(edb *db);
+int edb_open(edb **const db, const char *f_name, int readonly, int overwrite);
+int edb_close(edb *const db);
 
 // txn
-int edb_txn_begin(edb *db);
-int edb_txn_commit(edb *db);
-int edb_txn_abort(edb *db);
+int edb_txn_begin(edb *const db);
+int edb_txn_commit(edb *const db);
+int edb_txn_abort(edb *const db);
 
 // block
-int edb_allocate_block(edb *db, u32 *const new_block);
-int edb_modify_block(edb *db, u32 block, u32* new_block);
-int edb_free_block(edb *db, u32 block);
+int edb_allocate_block(edb *const db, u32 *const new_block);
+int edb_modify_block(edb *const db, const u32 block, u32 *const new_block);
+int edb_free_block(edb *const db, const u32 block);
 
 // array
-int edb_array_create(edb *db, obj_handle **hp, u8 obj_size);
-int edb_array_open(edb *db, obj_handle **hp, u32 obj_id);
-int edb_array_get(obj_handle *h, u32 index, void *data);
-int edb_array_set(obj_handle *h, u32 index, void *data);
-int edb_array_push(obj_handle *h, void *data);
-int edb_array_pop(obj_handle *h, void *data);
-int edb_array_length(obj_handle *h, u32 *length);
-int edb_array_capacity(obj_handle *h, u32 *capacity);
+int edb_array_create(edb *const db, obj_handle **const hp, u8 obj_size);
+int edb_array_open(edb *const db, obj_handle **const hp, u32 obj_id);
+int edb_array_get(obj_handle *const h, u32 index, void *data);
+int edb_array_set(obj_handle *const h, u32 index, void *data);
+int edb_array_push(obj_handle *const h, void *data);
+int edb_array_pop(obj_handle *const h, void *data);
+int edb_array_length(obj_handle *const h, u32 *length);
+int edb_array_capacity(obj_handle *const h, u32 *capacity);
 
 
 #ifdef __cplusplus

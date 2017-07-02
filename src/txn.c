@@ -44,6 +44,13 @@ txn_state_free(txn_state* ts) {
 
 
 int
+txn_block_is_writable(edb *db, u32 block) {
+    CHECK_CODE(db->txn != NULL, EDB_ERR_TXN_NO_TRANSACTION);
+    u32 v = mem_hash_get(db->txn->blocks, block);
+    return v == 0;
+}
+
+int
 txn_allocate_block(edb* db, u32 *new_block) {
     int err = 0;
     CHECK_CODE(db->txn != NULL, EDB_ERR_TXN_NO_TRANSACTION);

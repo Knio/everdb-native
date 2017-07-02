@@ -115,3 +115,4 @@ TEST_CASE("array") {
   REQUIRE(edb_txn_commit(db) == 0);
   REQUIRE(edb_close(db) == 0);
 }
+

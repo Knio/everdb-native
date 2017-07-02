@@ -6,12 +6,13 @@ project(everdb-native)
 SET(CMAKE_BUILD_TYPE "Debug")
 # SET(CMAKE_BUILD_TYPE "Release")
 
-SET(CMAKE_C_FLAGS "-std=c99 -fms-extensions -Wall")
-SET(CMAKE_C_FLAGS_DEBUG   "-g --coverage")
-SET(CMAKE_C_FLAGS_RELEASE "-O2")
+SET(CMAKE_C_FLAGS "-std=c11 -fms-extensions -Wall")
+SET(CMAKE_CXX_FLAGS "-std=c++11 -fms-extensions -Wall -fpermissive")
 
-SET(CMAKE_CXX_FLAGS "-fms-extensions -Wall -fpermissive")
+SET(CMAKE_C_FLAGS_DEBUG   "-g --coverage -DDEBUG")
 SET(CMAKE_CXX_FLAGS_DEBUG "-g --coverage")
+
+SET(CMAKE_C_FLAGS_RELEASE "-O2")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 SET(CMAKE_LINKER_FLAGS_DEBUG "--coverage")

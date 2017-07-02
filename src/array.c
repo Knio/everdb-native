@@ -37,7 +37,7 @@ int array_resize(edb* const db, const u32 root, const u32 capacity) {
       // make small block
       data = malloc(BLOCK_SIZE);
       u32 first_page;
-      CHECK(page_write_host_index(db, root, 0, &first_page));
+      CHECK(page_get_writable_block(db, root, 0, &first_page));
       u8* first_block = BLOCK(db, first_page);
       memcpy(data, first_block, small_capacity * pt->item_size);
       if ((err = page_resize(db, root, 0))) {
@@ -94,7 +94,7 @@ int array_resize(edb* const db, const u32 root, const u32 capacity) {
     pt = PAGE_TABLE_ARRAY(db, root);
     if (data) {
       u32 first_page;
-      CHECK(page_write_host_index(db, root, 0, &first_page));
+      CHECK(page_get_writable_block(db, root, 0, &first_page));
       u8* first_block = BLOCK(db, first_page);
       memcpy(first_block, data, small_capacity * pt->item_size);
       free(data);
@@ -154,7 +154,7 @@ static inline void* array_data(const edb* const db, const u32 root, const u32 in
   else {
     const u32 items_per_block = BLOCK_SIZE / pt->item_size;
     u32 page;
-    CHECK(page_write_host_index(db, root, index / items_per_block, &page));
+    CHECK(page_get_writable_block(db, root, index / items_per_block, &page));
     block = BLOCK(db, page);
     local_index = index % items_per_block;
   }
