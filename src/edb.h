@@ -1,57 +1,65 @@
-#ifndef EDB_H
-#define EDB_H
+#ifndef CORE_H
+#define CORE_H
 
+#include "../include/edb.h"
 #include "types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define EDB_ERROR_FILE_OPEN (1001)
-#define EDB_ERROR_FILE_SIZE (1002)
-#define EDB_ERROR_OPEN_TXN (1003)
-#define EDB_ERROR_READ_ONLY (1004)
-#define EDB_ERROR_ALREADY_OPEN (1005)
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
-// TODO
-// enum edb_open_read_modes {
-//     edb_open_read_only = 0,
-//     edb_open_read_write = 1;
-// }
-// #define EDB_OPEN_READ_ONLY (0)
-// #define EDB_OPEN_READ_WRITE (1)
+#define BLOCK_BITS (12) // 4096
+#define BLOCK_SIZE (1 << BLOCK_BITS)
+#define BLOCK_MASK (BLOCK_SIZE - 1)
 
-// public interface to everdb
+#define EDB_FREELIST_PRIMARY (1)
+#define EDB_FREELIST_SECONDARY (2)
+#define EDB_OBJLIST (3)
+#define EDB_USER_DATA (4)
 
-typedef struct edb_t edb;
-typedef struct obj_handle_t obj_handle;
+#define EDB_MAGIC_ROOT_PRIMARY (1)
+#define EDB_MAGIC_ROOT_SECONDARY (2)
+#define EDB_MAGIC_PAGE_SMALL (3)
+#define EDB_MAGIC_PAGE_FULL (4)
+#define EDB_MAGIC_BTREE (5)
+#define EDB_MAGIC_BTREE_LEAF (6)
 
-// edb
-int edb_open(edb **const db, const char *f_name, int readonly, int overwrite);
-int edb_close(edb *const db);
+typedef struct txn_state_t txn_state;
 
-// txn
-int edb_txn_begin(edb *const db);
-int edb_txn_commit(edb *const db);
-int edb_txn_abort(edb *const db);
+typedef struct edb_t {
+  int readonly;
+#ifdef _WIN32
+  HANDLE h_file;
+  HANDLE h_mapping;
+#else
+  int h_file;
+  void* h_mapping;
+#endif
+  u8* data;
 
-// block
+  u64 filesize;
+  u32 nblocks;
+
+  u32 freelist;
+  u32 objlist;
+
+  u32 txn_id;
+  txn_state* txn;
+} edb;
+
+
 int edb_allocate_block(edb *const db, u32 *const new_block);
 int edb_modify_block(edb *const db, const u32 block, u32 *const new_block);
 int edb_free_block(edb *const db, const u32 block);
-
-// array
-int edb_array_create(edb *const db, obj_handle **const hp, u8 obj_size);
-int edb_array_open(edb *const db, obj_handle **const hp, u32 obj_id);
-int edb_array_get(obj_handle *const h, u32 index, void *data);
-int edb_array_set(obj_handle *const h, u32 index, void *data);
-int edb_array_push(obj_handle *const h, void *data);
-int edb_array_pop(obj_handle *const h, void *data);
-int edb_array_length(obj_handle *const h, u32 *length);
-int edb_array_capacity(obj_handle *const h, u32 *capacity);
-
+int edb_is_writable(const edb *const db, const u32 block);
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // CORE_H

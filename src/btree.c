@@ -1,6 +1,14 @@
-#include "util.h"
-#include "edb.h"
+#ifdef _WIN32
+#error need headers?
+#elif __linux__
+#include <stdlib.h> // malloc
+#include <string.h> // memset
+#else
+#error Unsupported OS
+#endif
+
 #include "btree.h"
+#include "util.h"
 
 
 int btree_init(edb *const db, const u32 root) {
@@ -27,6 +35,7 @@ static inline int list_find(const btree *const bt, const u32 key) {
     }
     return b;
 }
+
 
 static inline void list_insert(btree *const bt, int j, u32 key, u32 data) {
     LOG_HERE;
@@ -118,6 +127,7 @@ int btree_get(const edb *const db, const u32 root, const u32 key, u32 *const val
     return err;
 }
 
+
 int btree_grow(edb *const db, u32 root, u32* new_root) {
     LOG_HERE;
     int err = 0;
@@ -149,10 +159,10 @@ int btree_grow(edb *const db, u32 root, u32* new_root) {
     bt->data[0] = root;
     bt->data[1] = child1;
     bt->self_size = 2;
-
     err:
     return err;
 }
+
 
 int btree_set(edb *const db, const u32 root, u32 const key, u32 const value) {
     LOG_HERE;
@@ -220,10 +230,8 @@ int btree_set(edb *const db, const u32 root, u32 const key, u32 const value) {
         }
         CHECK(r);
     }
-
     err:
     return err;
-
 }
 
 
@@ -329,11 +337,9 @@ int btree_pop(edb *const db, const u32 root, const u32 key, u32 *const value) {
         }
         CHECK(r);
     }
-
     err:
     if (value) {
         *value = 0;
     }
     return err;
-
 }

@@ -1,239 +1,96 @@
-#ifdef __linux
+#ifdef _WIN32
+#error need headers?
+#elif __linux__
 #include <stdlib.h> // malloc
 #include <string.h> // memset, memcpy
+#else
+#error Unsupported OS
 #endif
 
 #include "array.h"
 #include "util.h"
 
+#define PAGE_TABLE_SMALL(db, page) ((page_table_small*) (db->data + BLOCK_SIZE * page))
+#define PAGE_TABLE_FULL(db, page)  ((page_table_full* ) (db->data + BLOCK_SIZE * page))
+#define CHECK_IS_PAGE(pt) CHECK_CODE(pt->magic == EDB_MAGIC_PAGE_SMALL || pt->magic == EDB_MAGIC_PAGE_FULL, EDB_ERROR_DATA_CORRUPT)
 
-#define PAGE_TABLE_ARRAY(db, page) ((page_table_array*) (db->data + BLOCK_SIZE * page))
 
-int array_init(edb* const db, const u32 root, const u8 item_size) {
-  page_init(db, root);
-  page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
-  pt->item_size = item_size;
-  return 0;
+int array_init(edb* db, const u32 root, const u8 item_size) {
+  int err = 0;
+  CHECK(page_init(db, root));
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  pt->user1 = item_size;
+  err: return err;
 }
 
-int array_resize(edb* const db, const u32 root, const u32 capacity) {
+
+int array_resize(edb* db, const u32 root, const u64 length) {
   int err = 0;
-  u8* data = NULL;
-  page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  CHECK_IS_PAGE(pt);
+  CHECK(page_resize(db, root, pt->user1 * length));
+  err: return err;
+}
 
-  const u32 current_capacity = array_capacity(db, root);
 
-  if (capacity == current_capacity) {
-    goto err;
-  }
+int array_length(const edb *const db, const u32 root, u64 *const size) {
+  int err = 0;
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  CHECK_IS_PAGE(pt);
+  *size = pt->size / pt->user1;
+  err: return err;
+}
 
-  const u32 small_capacity = (BLOCK_SIZE
-     - sizeof(array_header)
-     - sizeof(page_header)
-  ) / pt->item_size;
 
-  if (capacity <= small_capacity) {
-    if (pt->nblocks != 0) {
-      // make small block
-      data = malloc(BLOCK_SIZE);
-      u32 first_page;
-      CHECK(page_get_writable_block(db, root, 0, &first_page));
-      u8* first_block = BLOCK(db, first_page);
-      memcpy(data, first_block, small_capacity * pt->item_size);
-      if ((err = page_resize(db, root, 0))) {
-          goto err;
-      }
-      pt = PAGE_TABLE_ARRAY(db, root);
-      memcpy(pt->data, data, small_capacity * pt->item_size);
-      free(data);
-      data = NULL;
-    }
-    else {
-      // already a smll block
-    }
-
-    // TODO zero unused elements?
-
-    if (pt->length > small_capacity) {
-      pt->length = small_capacity;
-    }
+int array_capacity(const edb* db, const u32 root, u64 *const size) {
+  int err = 0;
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  CHECK_IS_PAGE(pt);
+  if (pt->magic == EDB_MAGIC_PAGE_FULL) {
+    *size = pt->size / pt->user1;
     return 0;
   }
-
-  const u32 items_per_block = BLOCK_SIZE / pt->item_size;
-  const u32 nblocks = (capacity + items_per_block - 1) / items_per_block;
-  const u32 new_capacity = nblocks * items_per_block;
-
-  if (pt->nblocks == nblocks) {
-
-    // if (pt->length > length) {
-    //   shrink, cleanup last block
-    //   u8* last_block = BLOCK(db, page_get_host_index(db, root, nblocks - 1));
-    //   memset(
-    //     last_block
-    //       + (length % items_per_block) * pt->item_size,
-    //     0,
-    //     (pt->length - length) * pt->item_size
-    //   );
-    // }
+  if (pt->magic == EDB_MAGIC_PAGE_SMALL) {
+    *size = EDB_PAGE_SMALL_MAX_SIZE / pt->user1;
+    return 0;
   }
-
-  else { // nblocks is different
-    if (pt->nblocks == 0) {
-      // small_capacity data is stored where the page table will go,
-      // need to save it
-      data = malloc(BLOCK_SIZE);
-      memcpy(data, pt->data, small_capacity * pt->item_size);
-      memset(pt->data, 0, small_capacity * pt->item_size);
-    }
-
-    // if this is the freelist, push/pop can happen here
-    if ((err = page_resize(db, root, nblocks))) {
-      goto err;
-    }
-    pt = PAGE_TABLE_ARRAY(db, root);
-    if (data) {
-      u32 first_page;
-      CHECK(page_get_writable_block(db, root, 0, &first_page));
-      u8* first_block = BLOCK(db, first_page);
-      memcpy(first_block, data, small_capacity * pt->item_size);
-      free(data);
-      data = NULL;
-    }
-  }
-
-  if (pt->length > new_capacity) {
-    pt->length = new_capacity;
-  }
-
-  err:
-  if (data) {
-    free(data);
-    data = NULL;
-  }
-
-  return err;
+  err: return err;
 }
 
 
-u32 array_length(const edb* const db, const u32 root) {
-  const page_table_array const* pt = PAGE_TABLE_ARRAY(db, root);
-  return pt->length;
-}
-
-
-u32 array_capacity(const edb* const db, const u32 root) {
-  const page_table_array const* pt = PAGE_TABLE_ARRAY(db, root);
-  if (pt->nblocks == 0) {
-    // small
-    return (BLOCK_SIZE
-       - sizeof(array_header)
-       - sizeof(page_header)
-    ) / pt->item_size;
-  }
-  const u32 items_per_block = BLOCK_SIZE / pt->item_size;
-  return pt->nblocks * items_per_block;
-}
-
-
-static inline void* array_data(const edb* const db, const u32 root, const u32 index) {
+int array_get(const edb* db, const u32 root, const u64 index, void *const data) {
   int err = 0;
-
-  const page_table_array const* pt = PAGE_TABLE_ARRAY(db, root);
-
-  if (index >= pt->length) {
-    return NULL;
-  }
-
-  const u8* block = pt->data;
-  u32 local_index = index;
-
-  if (pt->nblocks == 0) {
-    // small
-  }
-  else {
-    const u32 items_per_block = BLOCK_SIZE / pt->item_size;
-    u32 page;
-    CHECK(page_get_writable_block(db, root, index / items_per_block, &page));
-    block = BLOCK(db, page);
-    local_index = index % items_per_block;
-  }
-
-  return (void*) (block + (local_index * pt->item_size));
-
-  err:
-  abort();
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  CHECK_IS_PAGE(pt);
+  CHECK(page_read(db, root, index * pt->user1, pt->user1, data));
+  err: return err;
 }
 
 
-int array_get(const edb* const db, const u32 root, const u32 index, void* data) {
-  LOG_DEBUG("root:%d index:%d\n", root, index);
-  const page_table_array const* pt = PAGE_TABLE_ARRAY(db, root);
-
-  const void const* element = array_data(db, root, index);
-  if (element == NULL) {
-    return ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
-  }
-
-  memcpy(
-    data,
-    element,
-    pt->item_size);
-
-  return 0;
-}
-
-
-int array_set(edb* const db, const u32 root, const u32 index, const void* data) {
-  LOG_DEBUG("root:%d index:%d\n", root, index);
-  const page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
-
-  void* const element = array_data(db, root, index);
-  if (element == NULL) {
-    return ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
-  }
-
-  memcpy(
-    element,
-    data,
-    pt->item_size);
-
-  return 0;
-}
-
-
-int array_push(edb* const db, const u32 root, const void *data) {
-  LOG_DEBUG("root:%d\n", root);
+int array_set(edb* db, const u32 root, const u64 index, const void *const data) {
   int err = 0;
-
-  page_table_array* pt = PAGE_TABLE_ARRAY(db, root);
-  const u32 capacity = array_capacity(db, root);
-
-  if (pt->length + 1 > capacity) {
-    CHECK(array_resize(db, root, pt->length + 1))
-    pt = PAGE_TABLE_ARRAY(db, root);
-  }
-
-  pt->length++;
-  CHECK(array_set(db, root, pt->length - 1, data))
-
-  err:
-  return err;
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  CHECK_IS_PAGE(pt);
+  CHECK(page_write(db, root, index * pt->user1, pt->user1, data));
+  err: return err;
 }
 
 
-int array_pop(edb* const db, const u32 root, void* data) {
-  LOG_DEBUG("root:%d\n", root);
+int array_push(edb* db, const u32 root, const void *const data) {
   int err = 0;
-  page_table_array* const pt = PAGE_TABLE_ARRAY(db, root);
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  CHECK_IS_PAGE(pt);
+  CHECK(page_resize(db, root, pt->size + pt->user1));
+  CHECK(page_write(db, root, pt->size - pt->user1, pt->user1, data));
+  err: return err;
+}
 
-  CHECK(array_get(db, root, pt->length - 1, data))
-  pt->length--;
 
-  // TODO shrink
-  // if ((err = array_resize(db, root, index - 1))) {
-  //   goto err;
-  // }
-  err:
-  return err;
+int array_pop(edb* db, const u32 root, void *const data) {
+  int err = 0;
+  page_table_small* pt = PAGE_TABLE_SMALL(db, root);
+  CHECK_IS_PAGE(pt);
+  CHECK(page_read(db, root, pt->size - pt->user1, pt->user1, data));
+  CHECK(page_resize(db, root, pt->size - pt->user1));
+  err: return err;
 }

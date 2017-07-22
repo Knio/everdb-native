@@ -21,11 +21,14 @@ SET(SRCS
     src/io.c
     src/page.c
     src/array.c
-    src/hash.c
-    src/btree.c
     src/freelist.c
+    src/btree.c
     src/txn.c
     src/edb.c
+    # src/hash.c
+
+    src/api/edb.c
+    src/api/array.c
 )
 
 add_library(everdb ${SRCS})

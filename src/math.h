@@ -1,7 +1,7 @@
 #ifndef MATH_H
 #define MATH_H
 
-#include "core.h"
+#include "types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,4 +21,4 @@ extern inline u32 next_power_of_two(u32 x);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif // MATH_H

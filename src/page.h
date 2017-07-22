@@ -1,7 +1,7 @@
 #ifndef PAGE_H
 #define PAGE_H
 
-#include "core.h"
+#include "edb.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,34 +12,34 @@ extern "C" {
 #define INDEX_MASK (INDEX_SIZE - 1)
 #define LEVEL_ONE (512)
 
-#define EDB_MAGIC_PAGE_SMALL (3101)
-#define EDB_MAGIC_PAGE_FULL (3102)
-
-#define EDB_ERR_PAGE_FULL (3152)
-
 #define EDB_PAGE_DATA_BLOCKS_PER_PAGE (510)
 #define EDB_PAGE_INDEX_BLOCKS_PER_PAGE (510)
 #define EDB_PAGE_DATA_BLOCKS_PER_INDEX (1024)
 
 #define EDB_PAGE_SMALL_MAX_SIZE (BLOCK_SIZE - 16)
+
 #define EDB_PAGE_MAX_BLOCKS \
   (EDB_PAGE_DATA_BLOCKS_PER_PAGE + (EDB_PAGE_INDEX_BLOCKS_PER_PAGE * EDB_PAGE_DATA_BLOCKS_PER_INDEX))
+
 #define EDB_PAGE_FULL_MAX_SIZE \
   (BLOCK_SIZE * EDB_PAGE_MAX_BLOCKS)
 
 
-#define EDB_ERR_PAGE_OUT_OF_BOUNDS (3101)
-#define EDB_ERR_PAGE_TOO_LARGE (3102)
-
 typedef struct page_table_small_t {
-  u32 magic;
+  u8 magic;
+  u8 user1;
+  u8 user2;
+  u8 user3;
   u32 nblocks;
   u64 size;
   u8 data[EDB_PAGE_SMALL_MAX_SIZE];
 } page_table_small;
 
 typedef struct page_table_full_t {
-  u32 magic;
+  u8 magic;
+  u8 user1;
+  u8 user2;
+  u8 user3;
   u32 nblocks;
   u64 size;
   u32 data_blocks[EDB_PAGE_DATA_BLOCKS_PER_PAGE];

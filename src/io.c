@@ -2,11 +2,11 @@
 #include <windows.h>
 #elif __linux__
 #include <unistd.h>
-#include <sys/types.h> // ftruncate
-#include <sys/stat.h>
-#include <fcntl.h> // posix_fallocate
-#include <sys/mman.h> //mmap
-#include <string.h> //memset
+#include <sys/types.h>  // ftruncate
+#include <sys/stat.h>   // fstat
+#include <fcntl.h>      // posix_fallocate
+#include <sys/mman.h>   // mmap
+#include <string.h>     // memset
 #else
 #error Unsupported OS
 #endif
@@ -14,7 +14,8 @@
 #include "io.h"
 #include "util.h"
 
-int io_open(edb *const db, const char *const fname, int readonly, int overwrite) {
+
+int io_open(edb *const db, const char *const fname, const int readonly, const int overwrite) {
   int err = 0;
   u32 nblocks = 0;
   int is_new = 0;
@@ -106,7 +107,7 @@ int io_open(edb *const db, const char *const fname, int readonly, int overwrite)
 }
 
 
-void io_map_close(edb *const db) {
+static void io_map_close(edb *const db) {
   #ifdef _WIN32
   if (db->data) {
     UnmapViewOfFile(db->data);

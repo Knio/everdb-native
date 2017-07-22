@@ -1,5 +1,4 @@
 #include "freelist.h"
-#include "edb.h"
 #include "io.h"
 #include "array.h"
 #include "util.h"
@@ -12,7 +11,8 @@ freelist_allocate_block(edb* db, u32* new_block) {
   int err = 0;
   CHECK(edb_modify_block(db, db->freelist, &db->freelist));
 
-  u32 length = array_length(db, db->freelist);
+  u32 length = 0;
+  CHECK(array_length(db, db->freelist, &length));
 
   if (length > 0) {
     CHECK(array_pop(db, db->freelist, new_block));

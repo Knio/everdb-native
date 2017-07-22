@@ -1,4 +1,3 @@
-
 #ifdef _WIN32
 #error unimplimented
 #elif __linux__
@@ -28,30 +27,29 @@ typedef struct txn_state_t {
 } txn_state;
 
 
-txn_state*
-txn_state_new() {
+txn_state* txn_state_new() {
     txn_state* ts = (txn_state*) calloc(1, sizeof(txn_state));
     ts->blocks = mem_hash_new();
     return ts;
 }
 
 
-void
-txn_state_free(txn_state* ts) {
+void txn_state_free(txn_state* ts) {
     mem_hash_free(ts->blocks);
     free(ts);
 }
 
 
-int
-txn_block_is_writable(edb *db, u32 block) {
+int txn_block_is_writable(const edb *const db, const u32 block) {
+    int err = 0;
     CHECK_CODE(db->txn != NULL, EDB_ERR_TXN_NO_TRANSACTION);
     u32 v = mem_hash_get(db->txn->blocks, block);
-    return v == 0;
+    return v == 0 ? EDB_ERR_TXN_INVALID_BLOCK : 0;
+    err:
+    return err;
 }
 
-int
-txn_allocate_block(edb* db, u32 *new_block) {
+int txn_allocate_block(edb *const db, u32 *const new_block) {
     int err = 0;
     CHECK_CODE(db->txn != NULL, EDB_ERR_TXN_NO_TRANSACTION);
 
@@ -63,8 +61,7 @@ txn_allocate_block(edb* db, u32 *new_block) {
 }
 
 
-int
-txn_free_block(edb *db, u32 block) {
+int txn_free_block(edb *const db, const u32 block) {
     int err = 0;
     CHECK_CODE(db->txn != NULL, EDB_ERR_TXN_NO_TRANSACTION);
 
@@ -99,8 +96,7 @@ txn_free_block(edb *db, u32 block) {
 }
 
 
-int
-txn_modify_block(edb *db, u32 block, u32* new_block) {
+int txn_modify_block(edb *const db, const u32 block, u32 *const new_block) {
     int err = 0;
     CHECK_CODE(db->txn != NULL, EDB_ERR_TXN_NO_TRANSACTION);
 
@@ -132,8 +128,7 @@ txn_modify_block(edb *db, u32 block, u32* new_block) {
 }
 
 
-int
-txn_begin_master(edb *db) {
+int txn_begin_master(edb *const db) {
     LOG_HERE;
     int err = 0;
 
@@ -158,8 +153,7 @@ txn_begin_master(edb *db) {
 }
 
 
-int
-txn_begin(edb *db) {
+int txn_begin(edb *const db) {
     LOG_HERE;
     int err = 0;
 
@@ -188,8 +182,7 @@ txn_begin(edb *db) {
 }
 
 
-int
-txn_commit_master(edb *db) {
+int txn_commit_master(edb *const db) {
     LOG_HERE;
     int err = 0;
 
@@ -256,8 +249,7 @@ txn_commit_master(edb *db) {
 }
 
 
-int
-txn_commit(edb *db) {
+int txn_commit(edb *const db) {
     LOG_HERE;
     int err = 0;
 
@@ -343,8 +335,7 @@ txn_commit(edb *db) {
 }
 
 
-int
-txn_abort_master(edb *db) {
+int txn_abort_master(edb *const db) {
     LOG_HERE;
     int err = 0;
 
@@ -364,8 +355,7 @@ txn_abort_master(edb *db) {
     return err;
 }
 
-int
-txn_abort(edb *db) {
+int txn_abort(edb *const db) {
     int err = 0;
     LOG_DEBUG("%s\n", "txn_abort");
 
@@ -400,4 +390,3 @@ txn_abort(edb *db) {
     err:
     return err;
 }
-

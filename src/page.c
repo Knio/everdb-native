@@ -1,11 +1,14 @@
-#ifdef __linux
+#ifdef _WIN32
+#error need headers?
+#elif __linux__
 #include <stdlib.h> // malloc
 #include <string.h> // memset, memcpy
+#else
+#error Unsupported OS
 #endif
 
-#include "edb.h"
-#include "util.h"
 #include "page.h"
+#include "util.h"
 
 #define PAGE_TABLE_SMALL(db, page) ((page_table_small*) (db->data + BLOCK_SIZE * page))
 #define PAGE_TABLE_FULL(db, page)  ((page_table_full* ) (db->data + BLOCK_SIZE * page))
@@ -16,6 +19,7 @@
 #define INDEX1(index) ((index - EDB_PAGE_DATA_BLOCKS_PER_PAGE)  & INDEX_MASK)
 
 #define CHECK_IS_PAGE(pt) CHECK_CODE(pt->magic == EDB_MAGIC_PAGE_SMALL || pt->magic == EDB_MAGIC_PAGE_FULL, EDB_ERROR_DATA_CORRUPT)
+
 
 int page_get_block(const edb *const db, const u32 root, const u32 index, u32 *const block) {
   int err = 0;

@@ -5,10 +5,11 @@
 #include <time.h>
 #include <stdint.h>
 
-#include "../src/edb.h"
-#include "../src/array.h"
-#include "../src/btree.h"
+#include "../include/edb.h"
 
+edb* db;
+edb_array* h;
+const int N = 2000000;
 
 uint64_t now() {
     struct timespec t;
@@ -20,13 +21,8 @@ uint64_t duration(uint64_t start) {
     return now() - start;
 }
 
-edb* db;
-obj_handle* h;
-const int N = 2000000;
-
 uint64_t benchmark_write() {
     uint64_t start = now();
-
     int r;
     for (int i = 0; i < N; i++) {
         r = edb_array_push(h, &i);
@@ -38,14 +34,11 @@ uint64_t benchmark_write() {
             edb_txn_begin(db);
         }
     }
-
     return duration(start);
 }
 
-
 uint64_t benchmark_read() {
     uint64_t start = now();
-
     int x;
     int r;
     for (int i = 0; i < N; i++) {
@@ -54,13 +47,11 @@ uint64_t benchmark_read() {
             abort();
         }
     }
-
     return duration(start);
 }
 
 
 TEST_CASE("benchmark") {
-
     REQUIRE(edb_open(&db, "benchmark.db", 0, 1) == 0);
     REQUIRE(edb_txn_begin(db) == 0);
     REQUIRE(edb_array_create(db, &h, sizeof(int)) == 0);
@@ -71,6 +62,5 @@ TEST_CASE("benchmark") {
     // REQUIRE(edb_txn_abort(db) == 0);
     REQUIRE(edb_txn_commit(db) == 0);
     REQUIRE(edb_close(db) == 0);
-
 }
 

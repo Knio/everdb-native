@@ -1,7 +1,7 @@
 #ifndef EDB_BTREE_H
 #define EDB_BTREE_H
 
-#include "core.h"
+#include "edb.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,9 +15,6 @@ extern "C" {
 #define EDB_ERROR_BTREE_FULL (3352)
 #define EDB_ERROR_BTREE_EMPTY (3353)
 #define EDB_ERROR_BTREE_REALLY_EMPTY (3354)
-
-#define EDB_MAGIC_BTREE (3300)
-#define EDB_MAGIC_BTREE_LEAF (3301)
 
 typedef struct btree_t {
     u32 magic;

@@ -1,4 +1,4 @@
-#include "../../src/core.h"
+#include "../../src/edb.h"
 
 #include <vector>
 std::vector<u32> freelist;

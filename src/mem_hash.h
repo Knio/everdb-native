@@ -2,17 +2,16 @@
 #define MEM_HASH_H
 
 #ifdef _WIN32
-#error unimplimented
+#error need headers?
 #elif __linux__
 #include <stdlib.h> // malloc
 #else
 #error Unsupported OS
 #endif
 
-#include "core.h"
+#include "types.h"
 
 /*
-
 Fast u32->u32 in-memory hash table.
 
 - only grows, no shrink
@@ -21,15 +20,15 @@ Fast u32->u32 in-memory hash table.
 */
 
 static const u32 HASH_SIZES[] = {
+  // a few prime numbers
   3, 7,
   13, 23, 41, 71,
   127, 223, 373, 631,
   1061, 1777, 1801, 3011, 5021, 8369,
   13963, 23279, 38803, 64679,
   107827, 179717, 299539, 499253, 832103,
-  1386839,  2311409, 3852361, 6420683
+  1386839,  2311409, 3852361, 6420683,
 };
-
 
 
 typedef struct mem_hash_item_t {

@@ -17,7 +17,7 @@ TEST_CASE("page init") {
   modified[0] = 1;
 
   page_table_small EMPTY_PAGE = {
-    .magic = 3101
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
   };
   REQUIRE(page_init(db, 0) == 0);
   REQUIRE(memcmp(db->data, (u8*)(&EMPTY_PAGE), BLOCK_SIZE) == 0);
@@ -28,12 +28,12 @@ TEST_CASE("resize small") {
   modified[0] = 1;
   page_table_small& pt = *(page_table_small*)db->data;
   pt = {
-    .magic = 3101,
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
   };
   page_table_small EXPECTED = {
-    .magic = 3101,
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 13,
   };
@@ -50,13 +50,13 @@ TEST_CASE("resize full") {
   modified[0] = 1;
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 1,
     .size = 0,
     .data_blocks = {1023},
   };
   page_table_full EXPECTED = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 1,
     .size = 13,
     .data_blocks = {1023},
@@ -78,7 +78,7 @@ TEST_CASE("read small") {
   init_edb_mock();
   page_table_small& pt = *(page_table_small*)db->data;
   pt = {
-    .magic = 3101,
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 13,
   };
@@ -95,12 +95,12 @@ TEST_CASE("write small") {
   modified[0] = 1;
   page_table_small& pt = *(page_table_small*)db->data;
   pt = {
-    .magic = 3101,
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
   };
   page_table_small EXPECTED = {
-    .magic = 3101,
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 13,
   };
@@ -122,7 +122,7 @@ TEST_CASE("read full") {
   init_edb_mock();
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 1,
     .size = 13,
     .data_blocks = {1023},
@@ -140,13 +140,13 @@ TEST_CASE("write full") {
   modified[0] = 1;
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 1,
     .size = 0,
     .data_blocks = {1023},
   };
   page_table_full EXPECTED = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 1,
     .size = 13,
     .data_blocks = {1023},
@@ -169,12 +169,12 @@ TEST_CASE("convert empty full to small") {
   modified[0] = 1;
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
   };
   page_table_full expected = {
-    .magic = 3101,
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
   };
@@ -188,12 +188,12 @@ TEST_CASE("convert empty small to full") {
   modified[0] = 1;
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3101,
+    .magic = 3, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
   };
   page_table_full expected = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
     .data_blocks = {0}
@@ -213,13 +213,13 @@ TEST_CASE("grow from 0 to 1") {
   page_table_full& pt = *(page_table_full*)db->data;
 
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
   };
 
   page_table_full expected = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 1,
     .size = 0,
     .data_blocks = {0}
@@ -240,7 +240,7 @@ TEST_CASE("shrink from 1 to 0") {
   page_table_full& pt = *(page_table_full*)db->data;
 
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 1,
     .size = 0,
     .data_blocks = {0}
@@ -250,7 +250,7 @@ TEST_CASE("shrink from 1 to 0") {
   pt.data_blocks[0] = block;
 
   page_table_full expected = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 0,
     .size = 0,
     .data_blocks = {0}
@@ -270,13 +270,13 @@ TEST_CASE("grow from 510 to 511") {
 
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 510,
     .size = 0,
   };
 
   page_table_full expected = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 511,
     .size = 0,
     .data_blocks = {0},
@@ -299,7 +299,7 @@ TEST_CASE("shrink from 511 to 510") {
 
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 511,
     .size = 0,
   };
@@ -311,7 +311,7 @@ TEST_CASE("shrink from 511 to 510") {
   ip.data_blocks[0] = 9999;
 
   page_table_full expected = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = 510,
     .size = 0,
     .data_blocks = {0},
@@ -335,7 +335,7 @@ TEST_CASE("grow from max") {
 
   page_table_full& pt = *(page_table_full*)db->data;
   pt = {
-    .magic = 3102,
+    .magic = 4, .user1 = 0, .user2 = 0, .user3 = 0,
     .nblocks = EDB_PAGE_MAX_BLOCKS,
   };
 

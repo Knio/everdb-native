@@ -1,7 +1,7 @@
 #ifndef FREELIST_H
 #define FREELIST_H
 
-#include "core.h"
+#include "edb.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,6 +14,6 @@ int freelist_free_block(edb* db, u32 block);
 }
 #endif
 
-#endif /* ifndef FREELIST_H */
+#endif // FREELIST_H
 
 
