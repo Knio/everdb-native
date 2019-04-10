@@ -11,7 +11,7 @@ everdb-native
 
 ## Should I Use this?
 
-No. Check back in Q4 2017.
+No. Check back in Q4 2019.
 
 TODO
 ----
